@@ -2,6 +2,11 @@
 <resources>
 
     <string name="app_name">ChalkUp!</string>
+    <string name="manage_boulders">Boulder schrauben</string>
+    <string name="add_session">Session eintragen</string>
+    <string name="title_boulders">Boulders</string>
+    <string name="title_boulder_detail">Boulder</string>
+    <string name="title_sessions">Sessions</string>
     <string name="title_session_detail">Session Detail</string>
 
 </resources>

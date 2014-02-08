@@ -6,4 +6,5 @@
     android:layout_height="match_parent"
     android:padding="16dp"
     android:textIsSelectable="true"
-    tools:context="de.chalkup.app.SessionDetailFragment" />
+    tools:context="de.chalkup.app.SessionDetailFragment"
+    android:background="#ffffc655"/>
