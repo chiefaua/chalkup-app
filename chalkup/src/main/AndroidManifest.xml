@@ -19,12 +19,10 @@
         </activity>
         <activity
             android:name="de.chalkup.app.BoulderListActivity"
-            android:label="@string/title_boulders"
             android:parentActivityName="de.chalkup.app.MainActivity" >
         </activity>
         <activity
             android:name="de.chalkup.app.BoulderDetailActivity"
-            android:label="@string/title_boulder_detail"
             android:parentActivityName="de.chalkup.app.BoulderListActivity" >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"

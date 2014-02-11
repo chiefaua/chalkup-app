@@ -8,5 +8,7 @@
     <string name="title_boulder_detail">Boulder</string>
     <string name="title_sessions">Sessions</string>
     <string name="title_session_detail">Session Detail</string>
+    <string name="add_boulder">Boulder hinzufügen</string>
+    <string name="choose_gym">Halle auswählen</string>
 
 </resources>

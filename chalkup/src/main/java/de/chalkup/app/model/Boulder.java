@@ -1,16 +1,34 @@
 package de.chalkup.app.model;
 
-public class Boulder {
-    public String id;
-    public String content;
+import android.graphics.Bitmap;
 
-    public Boulder(String id, String content) {
+public class Boulder {
+    private final long id;
+    private final Gym gym;
+    private final String name;
+
+    public Boulder(long id, Gym gym, String name) {
         this.id = id;
-        this.content = content;
+        this.gym = gym;
+        this.name = name;
+    }
+
+    public long getId() {
+        return id;
+    }
+
+    public Gym getGym() { return gym; }
+
+    public String getName() {
+        return name;
+    }
+
+    public String getPhotoFilename() {
+        return getGym().getId() + "_" + getId();
     }
 
     @Override
     public String toString() {
-        return content;
+        return name;
     }
 }
