@@ -2,7 +2,6 @@ package de.chalkup.app;
 
 import android.app.Activity;
 import android.content.ComponentName;
-import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ResolveInfo;
 import android.graphics.Bitmap;
@@ -72,23 +71,10 @@ public class BoulderDetailFragment extends Fragment implements View.OnClickListe
         if (boulder != null) {
             getActivity().getActionBar().setTitle(boulder.getName());
 
-            FileInputStream fis = null;
-            try {
-                fis = getActivity().getApplicationContext().openFileInput(boulder.getPhotoFilename());
-                Bitmap photo = BitmapFactory.decodeStream(fis);
-                if (photo != null) {
-                    imageView.setImageBitmap(photo);
-                }
-            } catch (FileNotFoundException ignored) {
-            } finally {
-                if (fis != null) {
-                    try {
-                        fis.close();
-                    } catch (IOException ignored) {
-                    }
-                }
+            File photoFile = boulder.getPhotoFile(getActivity().getApplicationContext());
+            if (photoFile.exists()) {
+                imageView.setImageURI(Uri.fromFile(photoFile));
             }
-
         }
 
         return rootView;
@@ -150,12 +136,10 @@ public class BoulderDetailFragment extends Fragment implements View.OnClickListe
                 if (extras != null) {
                     Bitmap photo = extras.getParcelable("data");
 
-                    imageView.setImageBitmap(photo);
-
+                    File photoFile = boulder.getPhotoFile(getActivity().getApplicationContext());
                     FileOutputStream fos = null;
                     try {
-                        fos = getActivity().getApplicationContext().openFileOutput(
-                                boulder.getPhotoFilename(), Context.MODE_PRIVATE);
+                        fos = new FileOutputStream(photoFile);
                         photo.compress(Bitmap.CompressFormat.JPEG, 80, fos);
                     } catch (FileNotFoundException e) {
                         throw new RuntimeException(e);
@@ -167,6 +151,8 @@ public class BoulderDetailFragment extends Fragment implements View.OnClickListe
                             }
                         }
                     }
+
+                    imageView.setImageURI(Uri.fromFile(photoFile));
                 }
 
                 File f = new File(imageCaptureUri.getPath());
