@@ -33,11 +33,9 @@ public class Gym {
         return Collections.unmodifiableList(this.boulders);
     }
 
-    public synchronized void addBoulder(Boulder boulder) {
+    public void addBoulder(Boulder boulder) {
         boulder.setId(nextBoulderId++);
         boulders.add(boulder);
-
-        GymManager.getInstance().boulderAdded(this, boulder);
     }
 
     public Boulder getBoulder(long id) throws BoulderNotFoundException {

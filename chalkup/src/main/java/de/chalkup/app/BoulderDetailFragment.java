@@ -5,12 +5,10 @@ import android.content.ComponentName;
 import android.content.Intent;
 import android.content.pm.ResolveInfo;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
-import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -18,8 +16,9 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.Toast;
 
+import com.google.inject.Inject;
+
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -29,16 +28,22 @@ import de.chalkup.app.model.Boulder;
 import de.chalkup.app.model.Gym;
 import de.chalkup.app.persistence.EntityNotFoundException;
 import de.chalkup.app.persistence.GymManager;
+import roboguice.fragment.RoboFragment;
+import roboguice.inject.InjectView;
 
-public class BoulderDetailFragment extends Fragment implements View.OnClickListener {
+public class BoulderDetailFragment extends RoboFragment implements View.OnClickListener {
     public static final String ARG_GYM_ID = "gym_id";
     public static final String ARG_BOULDER_ID = "boulder_id";
     private static final String TAG = BoulderDetailFragment.class.getName();
-    private Boulder boulder;
 
-    private Uri imageCaptureUri;
+    @Inject
+    private GymManager gymMgr;
 
+    @InjectView(R.id.boulder_image)
     private ImageView imageView;
+
+    private Boulder boulder;
+    private Uri imageCaptureUri;
 
     public BoulderDetailFragment() {
     }
@@ -50,7 +55,7 @@ public class BoulderDetailFragment extends Fragment implements View.OnClickListe
         if (getArguments().containsKey(ARG_GYM_ID) &&
                 getArguments().containsKey(ARG_BOULDER_ID)) {
             try {
-                Gym gym = GymManager.getInstance().getGym(getArguments().getLong(ARG_GYM_ID));
+                Gym gym = gymMgr.getGym(getArguments().getLong(ARG_GYM_ID));
                 boulder = gym.getBoulder(getArguments().getLong(ARG_BOULDER_ID));
             } catch (EntityNotFoundException e) {
                 Log.e(TAG, "Couldn't find gym or boulder", e);
@@ -61,12 +66,15 @@ public class BoulderDetailFragment extends Fragment implements View.OnClickListe
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        View rootView = inflater.inflate(R.layout.fragment_boulder_detail, container, false);
+        return inflater.inflate(R.layout.fragment_boulder_detail, container, false);
+    }
 
-        imageView = (ImageView) rootView.findViewById(R.id.boulder_image);
+    @Override
+    public void onViewCreated(View view, Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
 
-        rootView.findViewById(R.id.image_from_camera).setOnClickListener(this);
-        rootView.findViewById(R.id.image_from_gallery).setOnClickListener(this);
+        view.findViewById(R.id.image_from_camera).setOnClickListener(this);
+        view.findViewById(R.id.image_from_gallery).setOnClickListener(this);
 
         if (boulder != null) {
             getActivity().getActionBar().setTitle(boulder.getName());
@@ -74,10 +82,10 @@ public class BoulderDetailFragment extends Fragment implements View.OnClickListe
             File photoFile = boulder.getPhotoFile(getActivity().getApplicationContext());
             if (photoFile.exists()) {
                 imageView.setImageURI(Uri.fromFile(photoFile));
+            } else {
+                imageView.setImageResource(R.drawable.ic_launcher);
             }
         }
-
-        return rootView;
     }
 
     @Override
@@ -134,6 +142,9 @@ public class BoulderDetailFragment extends Fragment implements View.OnClickListe
                 Bundle extras = data.getExtras();
 
                 if (extras != null) {
+                    // reset image in case something goes wrong
+                    imageView.setImageResource(R.drawable.ic_launcher);
+
                     Bitmap photo = extras.getParcelable("data");
 
                     File photoFile = boulder.getPhotoFile(getActivity().getApplicationContext());
@@ -141,7 +152,12 @@ public class BoulderDetailFragment extends Fragment implements View.OnClickListe
                     try {
                         fos = new FileOutputStream(photoFile);
                         photo.compress(Bitmap.CompressFormat.JPEG, 80, fos);
+                        fos.flush();
+
+                        imageView.setImageURI(Uri.fromFile(photoFile));
                     } catch (FileNotFoundException e) {
+                        throw new RuntimeException(e);
+                    } catch (IOException e) {
                         throw new RuntimeException(e);
                     } finally {
                         if (fos != null) {
@@ -151,8 +167,6 @@ public class BoulderDetailFragment extends Fragment implements View.OnClickListe
                             }
                         }
                     }
-
-                    imageView.setImageURI(Uri.fromFile(photoFile));
                 }
 
                 File f = new File(imageCaptureUri.getPath());

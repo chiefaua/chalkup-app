@@ -1,13 +1,13 @@
 package de.chalkup.app;
 
 import android.os.Bundle;
-import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
 import de.chalkup.app.dummy.DummyContent;
+import roboguice.fragment.RoboFragment;
 
 /**
  * A fragment representing a single Session detail screen.
@@ -15,7 +15,7 @@ import de.chalkup.app.dummy.DummyContent;
  * in two-pane mode (on tablets) or a {@link SessionDetailActivity}
  * on handsets.
  */
-public class SessionDetailFragment extends Fragment {
+public class SessionDetailFragment extends RoboFragment {
     /**
      * The fragment argument representing the item ID that this fragment
      * represents.
@@ -48,7 +48,7 @@ public class SessionDetailFragment extends Fragment {
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
-            Bundle savedInstanceState) {
+                             Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_session_detail, container, false);
 
         // Show the dummy content as text in a TextView.

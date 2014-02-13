@@ -1,7 +1,5 @@
 package de.chalkup.app.adapter;
 
-import android.app.Activity;
-import android.content.Context;
 import android.database.DataSetObserver;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -9,15 +7,15 @@ import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.TextView;
 
-import java.util.List;
+import com.google.inject.Inject;
 
-import de.chalkup.app.model.Gym;
 import de.chalkup.app.persistence.GymManager;
 
 public class GymNavigationAdapter extends BaseAdapter {
-    private GymManager gymMgr = GymManager.getInstance();
+    @Inject
+    private GymManager gymMgr;
     private int registeredDataSetObservers = 0;
-    private Context context;
+    @Inject
     private LayoutInflater inflaterService;
 
     private DataSetObserver gymObserver = new DataSetObserver() {
@@ -31,12 +29,6 @@ public class GymNavigationAdapter extends BaseAdapter {
             notifyDataSetInvalidated();
         }
     };
-
-    public GymNavigationAdapter(Context context) {
-        this.context = context;
-        inflaterService = (LayoutInflater) this.context.getSystemService(
-                Activity.LAYOUT_INFLATER_SERVICE);
-    }
 
     @Override
     public boolean hasStableIds() {
@@ -83,9 +75,14 @@ public class GymNavigationAdapter extends BaseAdapter {
     }
 
     @Override
-    public View getView(int index, View view, ViewGroup viewGroup) {
-        TextView tv = (TextView) inflaterService.inflate(
-                android.R.layout.simple_spinner_dropdown_item, null);
+    public View getView(int index, View convertView, ViewGroup viewGroup) {
+        View view = convertView;
+        if (view == null) {
+            view = inflaterService.inflate(
+                    android.R.layout.simple_spinner_dropdown_item, viewGroup, false);
+        }
+        TextView tv = (TextView) view;
+
         tv.setText(gymMgr.getGyms().get(index).getName());
         return tv;
     }

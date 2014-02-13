@@ -3,23 +3,28 @@ package de.chalkup.app;
 import android.app.ActionBar;
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.v4.app.FragmentActivity;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 
-import java.util.List;
+import com.google.inject.Inject;
 
 import de.chalkup.app.adapter.GymNavigationAdapter;
 import de.chalkup.app.model.Boulder;
 import de.chalkup.app.model.Gym;
 import de.chalkup.app.persistence.GymManager;
 import de.chalkup.app.persistence.GymNotFoundException;
+import roboguice.activity.RoboFragmentActivity;
 
-public class BoulderListActivity extends FragmentActivity
+public class BoulderListActivity extends RoboFragmentActivity
         implements BoulderListFragment.Callback, ActionBar.OnNavigationListener {
 
     private static final String TAG = BoulderListActivity.class.getName();
+
+    @Inject
+    private GymManager gymMgr;
+    @Inject
+    private GymNavigationAdapter gymNavigationAdapter;
 
     /**
      * Whether or not the activity is in two-pane mode.
@@ -48,9 +53,7 @@ public class BoulderListActivity extends FragmentActivity
         actionBar.setDisplayShowTitleEnabled(false);
 
         actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_LIST);
-
-        GymNavigationAdapter adapter = new GymNavigationAdapter(getApplicationContext());
-        actionBar.setListNavigationCallbacks(adapter, this);
+        actionBar.setListNavigationCallbacks(gymNavigationAdapter, this);
     }
 
     @Override
@@ -64,7 +67,7 @@ public class BoulderListActivity extends FragmentActivity
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == R.id.add_boulder) {
             Boulder boulder = new Boulder(activeGym, "new boulder");
-            activeGym.addBoulder(boulder);
+            gymMgr.addBoulderToGym(activeGym, boulder);
             onBoulderSelected(boulder);
             return true;
         }
@@ -94,7 +97,7 @@ public class BoulderListActivity extends FragmentActivity
     @Override
     public boolean onNavigationItemSelected(int itemPosition, long itemId) {
         try {
-            activeGym = GymManager.getInstance().getGym(itemId);
+            activeGym = gymMgr.getGym(itemId);
 
             BoulderListFragment listFragment = new BoulderListFragment();
             Bundle args = new Bundle();

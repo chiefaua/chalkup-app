@@ -2,11 +2,12 @@ package de.chalkup.app;
 
 import android.app.Activity;
 import android.os.Bundle;
-import android.support.v4.app.ListFragment;
 import android.util.Log;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
+
+import com.google.inject.Inject;
 
 import java.util.Collections;
 import java.util.List;
@@ -16,10 +17,10 @@ import de.chalkup.app.model.Gym;
 import de.chalkup.app.persistence.BoulderNotFoundException;
 import de.chalkup.app.persistence.GymManager;
 import de.chalkup.app.persistence.GymNotFoundException;
+import roboguice.fragment.RoboListFragment;
 
-public class BoulderListFragment extends ListFragment {
+public class BoulderListFragment extends RoboListFragment {
     public static final String ARG_GYM_ID = "gym_id";
-
     private static final String TAG = BoulderListFragment.class.getName();
     private static final String STATE_ACTIVATED_BOULDER = "activated_boulder";
 
@@ -28,7 +29,11 @@ public class BoulderListFragment extends ListFragment {
         public void onBoulderSelected(Boulder boulder) {
         }
     };
+
     private Callback callback = dummyCallback;
+
+    @Inject
+    private GymManager gymMgr;
     private int activatedPosition = ListView.INVALID_POSITION;
 
     private Gym activeGym;
@@ -43,8 +48,7 @@ public class BoulderListFragment extends ListFragment {
         List<Boulder> boulders = Collections.emptyList();
         if (getArguments() != null && getArguments().containsKey(ARG_GYM_ID)) {
             try {
-                activeGym = GymManager.getInstance()
-                        .getGym(getArguments().getLong(ARG_GYM_ID));
+                activeGym = gymMgr.getGym(getArguments().getLong(ARG_GYM_ID));
                 boulders = activeGym.getBoulders();
             } catch (GymNotFoundException e) {
                 Log.e(TAG, "Failed to find active gym", e);

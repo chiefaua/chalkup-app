@@ -3,6 +3,8 @@ package de.chalkup.app.persistence;
 import android.database.DataSetObservable;
 import android.database.DataSetObserver;
 
+import com.google.inject.Singleton;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -10,15 +12,17 @@ import java.util.List;
 import de.chalkup.app.model.Boulder;
 import de.chalkup.app.model.Gym;
 
+@Singleton
 public class GymManager {
-    private static GymManager instance = new GymManager();
-    private static List<Gym> GYMS = new ArrayList<Gym>();
+    private final List<Gym> gyms = new ArrayList<Gym>();
 
-    static {
-        GYMS.add(new Gym(1, "Boulderwelt"));
-        GYMS.add(new Gym(2, "Heavens Gate"));
+    private final DataSetObservable dataSetObservable = new DataSetObservable();
 
-        for (Gym gym : GYMS) {
+    GymManager() {
+        gyms.add(new Gym(1, "Boulderwelt"));
+        gyms.add(new Gym(2, "Heavens Gate"));
+
+        for (Gym gym : gyms) {
             for (int i = 0; i < 5; i++) {
                 Boulder b = new Boulder(gym,
                         "Boulder " + i + " in " + gym.getName());
@@ -27,17 +31,8 @@ public class GymManager {
         }
     }
 
-    private final DataSetObservable dataSetObservable = new DataSetObservable();
-
-    private GymManager() {
-    }
-
-    public static GymManager getInstance() {
-        return instance;
-    }
-
     public List<Gym> getGyms() {
-        return Collections.unmodifiableList(GYMS);
+        return Collections.unmodifiableList(gyms);
     }
 
     public Gym getGym(long id) throws GymNotFoundException {
@@ -50,15 +45,16 @@ public class GymManager {
         throw new GymNotFoundException();
     }
 
+    public void addBoulderToGym(Gym gym, Boulder boulder) {
+        gym.addBoulder(boulder);
+        dataSetObservable.notifyChanged();
+    }
+
     public void registerDataSetObserver(DataSetObserver observer) {
         dataSetObservable.registerObserver(observer);
     }
 
     public void unregisterDataSetObserver(DataSetObserver observer) {
         dataSetObservable.unregisterObserver(observer);
-    }
-
-    public void boulderAdded(Gym gym, Boulder boulder) {
-        dataSetObservable.notifyChanged();
     }
 }

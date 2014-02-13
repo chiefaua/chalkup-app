@@ -2,7 +2,8 @@ package de.chalkup.app;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.v4.app.FragmentActivity;
+
+import roboguice.activity.RoboFragmentActivity;
 
 
 /**
@@ -12,16 +13,16 @@ import android.support.v4.app.FragmentActivity;
  * lead to a {@link SessionDetailActivity} representing
  * item details. On tablets, the activity presents the list of items and
  * item details side-by-side using two vertical panes.
- * <p>
+ * <p/>
  * The activity makes heavy use of fragments. The list of items is a
  * {@link SessionListFragment} and the item details
  * (if present) is a {@link SessionDetailFragment}.
- * <p>
+ * <p/>
  * This activity also implements the required
  * {@link SessionListFragment.Callbacks} interface
  * to listen for item selections.
  */
-public class SessionListActivity extends FragmentActivity
+public class SessionListActivity extends RoboFragmentActivity
         implements SessionListFragment.Callbacks {
 
     /**

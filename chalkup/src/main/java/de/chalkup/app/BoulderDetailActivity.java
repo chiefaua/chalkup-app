@@ -6,12 +6,15 @@ import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.NavUtils;
 import android.view.MenuItem;
 
-public class BoulderDetailActivity extends FragmentActivity {
+import roboguice.activity.RoboFragmentActivity;
+import roboguice.inject.ContentView;
+
+@ContentView(R.layout.activity_boulder_detail)
+public class BoulderDetailActivity extends RoboFragmentActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_boulder_detail);
 
         getActionBar().setDisplayHomeAsUpEnabled(true);
 
