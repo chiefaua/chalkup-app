@@ -18,9 +18,9 @@ import android.widget.Toast;
 
 import com.google.inject.Inject;
 
+import org.apache.commons.io.FileUtils;
+
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.List;
 
@@ -44,6 +44,7 @@ public class BoulderDetailFragment extends RoboFragment implements View.OnClickL
 
     private Boulder boulder;
     private Uri imageCaptureUri;
+    private Uri croppedImageUri;
 
     public BoulderDetailFragment() {
     }
@@ -79,9 +80,9 @@ public class BoulderDetailFragment extends RoboFragment implements View.OnClickL
         if (boulder != null) {
             getActivity().getActionBar().setTitle(boulder.getName());
 
-            File photoFile = boulder.getPhotoFile(getActivity().getApplicationContext());
-            if (photoFile.exists()) {
-                imageView.setImageURI(Uri.fromFile(photoFile));
+            Uri photoUri = boulder.getPhotoUri(getActivity().getApplicationContext());
+            if (new File(photoUri.getPath()).exists()) {
+                imageView.setImageURI(photoUri);
             } else {
                 imageView.setImageResource(R.drawable.ic_launcher);
             }
@@ -106,7 +107,7 @@ public class BoulderDetailFragment extends RoboFragment implements View.OnClickL
         imageCaptureUri = Uri.fromFile(new File(Environment.getExternalStorageDirectory(),
                 "tmp_avatar_" + String.valueOf(System.currentTimeMillis()) + ".jpg"));
 
-        intent.putExtra(android.provider.MediaStore.EXTRA_OUTPUT, imageCaptureUri);
+        intent.putExtra(MediaStore.EXTRA_OUTPUT, imageCaptureUri);
         intent.putExtra("return-data", true);
 
         startActivityForResult(intent, RequestCode.GRAB_FROM_CAMERA.ordinal());
@@ -139,40 +140,21 @@ public class BoulderDetailFragment extends RoboFragment implements View.OnClickL
                 doCrop();
                 break;
             case CROP_IMAGE:
-                Bundle extras = data.getExtras();
-
-                if (extras != null) {
-                    // reset image in case something goes wrong
-                    imageView.setImageResource(R.drawable.ic_launcher);
-
-                    Bitmap photo = extras.getParcelable("data");
-
-                    File photoFile = boulder.getPhotoFile(getActivity().getApplicationContext());
-                    FileOutputStream fos = null;
-                    try {
-                        fos = new FileOutputStream(photoFile);
-                        photo.compress(Bitmap.CompressFormat.JPEG, 80, fos);
-                        fos.flush();
-
-                        imageView.setImageURI(Uri.fromFile(photoFile));
-                    } catch (FileNotFoundException e) {
-                        throw new RuntimeException(e);
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    } finally {
-                        if (fos != null) {
-                            try {
-                                fos.close();
-                            } catch (IOException ignored) {
-                            }
-                        }
-                    }
+                // force image reload by resetting to the initial value first
+                Uri photoUri = boulder.getPhotoUri(getActivity().getApplicationContext());
+                imageView.setImageResource(R.drawable.ic_launcher);
+                try {
+                    FileUtils.copyFile(new File(croppedImageUri.getPath()),
+                            new File(photoUri.getPath()));
+                } catch (IOException e) {
+                    Log.e(TAG, "Failed to copy cropped image", e);
+                    Toast.makeText(getActivity(), "Failed to copy cropped image",
+                            Toast.LENGTH_SHORT);
                 }
+                imageView.setImageURI(photoUri);
 
-                File f = new File(imageCaptureUri.getPath());
-                if (f.exists()) {
-                    f.delete();
-                }
+                deleteFile(imageCaptureUri);
+                deleteFile(croppedImageUri);
                 break;
         }
     }
@@ -191,17 +173,28 @@ public class BoulderDetailFragment extends RoboFragment implements View.OnClickL
         } else {
             intent.setData(imageCaptureUri);
 
+            croppedImageUri = Uri.fromFile(
+                    new File(getActivity().getApplicationContext().getExternalCacheDir(),
+                            "temp.jpg"));
+
             intent.putExtra("crop", "true");
-            intent.putExtra("outputY", 96);
             intent.putExtra("noFaceDetection", true);
             intent.putExtra("scale", true);
-            intent.putExtra("return-data", true);
+            intent.putExtra(MediaStore.EXTRA_OUTPUT, croppedImageUri);
+            intent.putExtra("outputFormat", Bitmap.CompressFormat.JPEG.name());
 
             ResolveInfo res = list.get(0);
             intent.setComponent(new ComponentName(
                     res.activityInfo.packageName, res.activityInfo.name));
 
             startActivityForResult(intent, RequestCode.CROP_IMAGE.ordinal());
+        }
+    }
+
+    private void deleteFile(Uri uri) {
+        File f = new File(uri.getPath());
+        if (f.exists()) {
+            f.delete();
         }
     }
 

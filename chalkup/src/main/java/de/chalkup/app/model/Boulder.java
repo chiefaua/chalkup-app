@@ -1,6 +1,7 @@
 package de.chalkup.app.model;
 
 import android.content.Context;
+import android.net.Uri;
 
 import java.io.File;
 
@@ -35,8 +36,8 @@ public class Boulder {
         return name;
     }
 
-    public File getPhotoFile(Context context) {
-        return context.getFileStreamPath(getGym().getId() + "_" + getId());
+    public Uri getPhotoUri(Context context) {
+        return Uri.fromFile(context.getFileStreamPath(getGym().getId() + "_" + getId()));
     }
 
     @Override
