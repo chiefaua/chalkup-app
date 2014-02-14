@@ -8,15 +8,17 @@ public class Boulder {
     private long id = INVALID_ID;
     private final Gym gym;
     private final String name;
+    private Grade grade;
 
     public Boulder(Gym gym, String name) {
-        this(gym, INVALID_ID, name);
+        this(gym, INVALID_ID, name, Grade.zero());
     }
 
-    public Boulder(Gym gym, long id, String name) {
+    public Boulder(Gym gym, long id, String name, Grade grade) {
         this.gym = gym;
         this.id = id;
         this.name = name;
+        this.grade = grade;
     }
 
     public boolean isPersisted() {
@@ -40,6 +42,10 @@ public class Boulder {
 
     public String getName() {
         return name;
+    }
+
+    public Grade getGrade() {
+        return grade;
     }
 
     public Uri getPhotoUri(Context context) {

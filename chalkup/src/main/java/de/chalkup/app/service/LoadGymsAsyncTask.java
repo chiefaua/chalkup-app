@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import de.chalkup.app.model.Boulder;
+import de.chalkup.app.model.Grade;
 import de.chalkup.app.model.Gym;
 
 @Singleton
@@ -91,12 +92,16 @@ public class LoadGymsAsyncTask extends AsyncTask<Void, Void, List<Gym>> {
             JSONObject jsonBoulder = jsonBoulders.getJSONObject(i);
             long id = jsonBoulder.getLong("id");
             String colorName = jsonBoulder.getJSONObject("color").getString("germanName");
-            String gradeName = jsonBoulder.getJSONObject("grade").getJSONObject("mean")
-                    .getString("font");
-            boulders.add(new Boulder(gym, id, colorName + " " + gradeName));
+            Grade grade = parseGrade(jsonBoulder.getJSONObject("grade").getJSONObject("mean"));
+            boulders.add(new Boulder(gym, id, colorName, grade));
         }
 
         return boulders;
+    }
+
+    private Grade parseGrade(JSONObject gradeObject) throws JSONException {
+        long value = gradeObject.getLong("value");
+        return new Grade(value);
     }
 
     private String loadJSON(String path) throws IOException {

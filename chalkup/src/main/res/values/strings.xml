@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="app_name">ChalkUp!</string>
+    <string name="app_name">chalkUp!</string>
     <string name="manage_boulders">Boulder schrauben</string>
     <string name="add_session">Session eintragen</string>
     <string name="title_boulders">Boulders</string>
