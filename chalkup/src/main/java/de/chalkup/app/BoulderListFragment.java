@@ -4,19 +4,16 @@ import android.app.Activity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
-import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
 import com.google.inject.Inject;
 
-import java.util.Collections;
-import java.util.List;
-
+import de.chalkup.app.adapter.BoulderListAdapter;
 import de.chalkup.app.model.Boulder;
 import de.chalkup.app.model.Gym;
-import de.chalkup.app.persistence.BoulderNotFoundException;
-import de.chalkup.app.persistence.GymManager;
-import de.chalkup.app.persistence.GymNotFoundException;
+import de.chalkup.app.service.BoulderNotFoundException;
+import de.chalkup.app.service.GymService;
+import de.chalkup.app.service.GymNotFoundException;
 import roboguice.fragment.RoboListFragment;
 
 public class BoulderListFragment extends RoboListFragment {
@@ -33,7 +30,7 @@ public class BoulderListFragment extends RoboListFragment {
     private Callback callback = dummyCallback;
 
     @Inject
-    private GymManager gymMgr;
+    private GymService gymService;
     private int activatedPosition = ListView.INVALID_POSITION;
 
     private Gym activeGym;
@@ -45,21 +42,16 @@ public class BoulderListFragment extends RoboListFragment {
     public void onViewCreated(View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        List<Boulder> boulders = Collections.emptyList();
         if (getArguments() != null && getArguments().containsKey(ARG_GYM_ID)) {
             try {
-                activeGym = gymMgr.getGym(getArguments().getLong(ARG_GYM_ID));
-                boulders = activeGym.getBoulders();
+                activeGym = gymService.getGym(getArguments().getLong(ARG_GYM_ID));
             } catch (GymNotFoundException e) {
                 Log.e(TAG, "Failed to find active gym", e);
+                return;
             }
         }
 
-        setListAdapter(new ArrayAdapter<Boulder>(
-                getActivity(),
-                android.R.layout.simple_list_item_activated_1,
-                android.R.id.text1,
-                boulders));
+        setListAdapter(new BoulderListAdapter(getActivity(), activeGym));
 
         if (savedInstanceState != null
                 && savedInstanceState.containsKey(STATE_ACTIVATED_BOULDER)) {

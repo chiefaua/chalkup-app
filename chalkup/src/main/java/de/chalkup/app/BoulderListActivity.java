@@ -12,8 +12,8 @@ import com.google.inject.Inject;
 import de.chalkup.app.adapter.GymNavigationAdapter;
 import de.chalkup.app.model.Boulder;
 import de.chalkup.app.model.Gym;
-import de.chalkup.app.persistence.GymManager;
-import de.chalkup.app.persistence.GymNotFoundException;
+import de.chalkup.app.service.GymService;
+import de.chalkup.app.service.GymNotFoundException;
 import roboguice.activity.RoboFragmentActivity;
 
 public class BoulderListActivity extends RoboFragmentActivity
@@ -22,7 +22,7 @@ public class BoulderListActivity extends RoboFragmentActivity
     private static final String TAG = BoulderListActivity.class.getName();
 
     @Inject
-    private GymManager gymMgr;
+    private GymService gymService;
     @Inject
     private GymNavigationAdapter gymNavigationAdapter;
 
@@ -54,6 +54,8 @@ public class BoulderListActivity extends RoboFragmentActivity
 
         actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_LIST);
         actionBar.setListNavigationCallbacks(gymNavigationAdapter, this);
+
+        gymService.syncGyms();
     }
 
     @Override
@@ -67,7 +69,7 @@ public class BoulderListActivity extends RoboFragmentActivity
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == R.id.add_boulder) {
             Boulder boulder = new Boulder(activeGym, "new boulder");
-            gymMgr.addBoulderToGym(activeGym, boulder);
+            gymService.addBoulderToGym(activeGym, boulder);
             onBoulderSelected(boulder);
             return true;
         }
@@ -97,7 +99,7 @@ public class BoulderListActivity extends RoboFragmentActivity
     @Override
     public boolean onNavigationItemSelected(int itemPosition, long itemId) {
         try {
-            activeGym = gymMgr.getGym(itemId);
+            activeGym = gymService.getGym(itemId);
 
             BoulderListFragment listFragment = new BoulderListFragment();
             Bundle args = new Bundle();

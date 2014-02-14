@@ -1,4 +1,4 @@
-package de.chalkup.app.persistence;
+package de.chalkup.app.service;
 
 public class EntityNotFoundException extends Exception {
 }

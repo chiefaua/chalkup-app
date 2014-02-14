@@ -26,8 +26,8 @@ import java.util.List;
 
 import de.chalkup.app.model.Boulder;
 import de.chalkup.app.model.Gym;
-import de.chalkup.app.persistence.EntityNotFoundException;
-import de.chalkup.app.persistence.GymManager;
+import de.chalkup.app.service.EntityNotFoundException;
+import de.chalkup.app.service.GymService;
 import roboguice.fragment.RoboFragment;
 import roboguice.inject.InjectView;
 
@@ -37,7 +37,7 @@ public class BoulderDetailFragment extends RoboFragment implements View.OnClickL
     private static final String TAG = BoulderDetailFragment.class.getName();
 
     @Inject
-    private GymManager gymMgr;
+    private GymService gymMgr;
 
     @InjectView(R.id.boulder_image)
     private ImageView imageView;

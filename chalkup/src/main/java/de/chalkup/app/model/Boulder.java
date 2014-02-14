@@ -3,18 +3,24 @@ package de.chalkup.app.model;
 import android.content.Context;
 import android.net.Uri;
 
-import java.io.File;
-
 public class Boulder {
     public static final long INVALID_ID = -1;
-
+    private long id = INVALID_ID;
     private final Gym gym;
     private final String name;
-    private long id = INVALID_ID;
 
     public Boulder(Gym gym, String name) {
+        this(gym, INVALID_ID, name);
+    }
+
+    public Boulder(Gym gym, long id, String name) {
         this.gym = gym;
+        this.id = id;
         this.name = name;
+    }
+
+    public boolean isPersisted() {
+        return id != INVALID_ID;
     }
 
     public long getId() {

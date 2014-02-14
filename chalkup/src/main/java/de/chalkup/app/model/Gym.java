@@ -2,12 +2,9 @@ package de.chalkup.app.model;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
-import de.chalkup.app.persistence.BoulderNotFoundException;
-import de.chalkup.app.persistence.GymManager;
+import de.chalkup.app.service.BoulderNotFoundException;
 
 public class Gym {
     private final long id;
@@ -34,7 +31,9 @@ public class Gym {
     }
 
     public void addBoulder(Boulder boulder) {
-        boulder.setId(nextBoulderId++);
+        if (!boulder.isPersisted()) {
+            boulder.setId(nextBoulderId++);
+        }
         boulders.add(boulder);
     }
 
