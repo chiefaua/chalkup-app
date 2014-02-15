@@ -11,5 +11,9 @@
     <string name="add_boulder">Boulder hinzufügen</string>
     <string name="choose_gym">Halle auswählen</string>
     <string name="refresh_boulder">Boulder aktualisieren</string>
+    <string name="gym_sync_failed">Das Laden der Boulder is fehlgeschlagen</string>
+    <string name="complete_with">Aktion durchführen mit</string>
+    <string name="copy_cropped_image_failed">Das Speichern des zugeschnittenen Bildes ist fehlgeschlagen</string>
+    <string name="crop_app_not_found">Es konnte keine App zum Zuschneiden von Bildern gefunden werden</string>
 
 </resources>

@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import de.chalkup.app.R;
 import de.chalkup.app.model.Boulder;
 import de.chalkup.app.model.Gym;
 
@@ -41,7 +42,7 @@ public class GymService {
 
             @Override
             public void gymsLoadingFailed() {
-                Toast.makeText(context, "Failed to load gyms", Toast.LENGTH_SHORT).show();
+                Toast.makeText(context, R.string.gym_sync_failed, Toast.LENGTH_SHORT).show();
                 callback.syncFinished();
             }
         });

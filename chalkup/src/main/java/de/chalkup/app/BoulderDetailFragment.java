@@ -120,7 +120,8 @@ public class BoulderDetailFragment extends RoboFragment implements View.OnClickL
         intent.setAction(Intent.ACTION_GET_CONTENT);
         intent.addCategory(Intent.CATEGORY_OPENABLE);
 
-        startActivityForResult(Intent.createChooser(intent, "Complete action using"),
+        startActivityForResult(
+                Intent.createChooser(intent, getActivity().getString(R.string.complete_with)),
                 RequestCode.GRAB_FROM_GALLERY.ordinal());
     }
 
@@ -148,7 +149,7 @@ public class BoulderDetailFragment extends RoboFragment implements View.OnClickL
                             new File(photoUri.getPath()));
                 } catch (IOException e) {
                     Log.e(TAG, "Failed to copy cropped image", e);
-                    Toast.makeText(getActivity(), "Failed to copy cropped image",
+                    Toast.makeText(getActivity(), R.string.copy_cropped_image_failed,
                             Toast.LENGTH_SHORT).show();
                 }
                 imageView.setImageURI(photoUri);
@@ -168,7 +169,7 @@ public class BoulderDetailFragment extends RoboFragment implements View.OnClickL
         int size = list.size();
 
         if (size == 0) {
-            Toast.makeText(getActivity(), "Can not find image crop app", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getActivity(), R.string.crop_app_not_found, Toast.LENGTH_SHORT).show();
             return;
         } else {
             intent.setData(imageCaptureUri);
