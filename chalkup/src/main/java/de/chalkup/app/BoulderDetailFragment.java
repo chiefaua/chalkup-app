@@ -149,7 +149,7 @@ public class BoulderDetailFragment extends RoboFragment implements View.OnClickL
                 } catch (IOException e) {
                     Log.e(TAG, "Failed to copy cropped image", e);
                     Toast.makeText(getActivity(), "Failed to copy cropped image",
-                            Toast.LENGTH_SHORT);
+                            Toast.LENGTH_SHORT).show();
                 }
                 imageView.setImageURI(photoUri);
 

@@ -10,5 +10,6 @@
     <string name="title_session_detail">Session Detail</string>
     <string name="add_boulder">Boulder hinzufügen</string>
     <string name="choose_gym">Halle auswählen</string>
+    <string name="refresh_boulder">Boulder aktualisieren</string>
 
 </resources>

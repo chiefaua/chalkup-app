@@ -1,16 +1,20 @@
 package de.chalkup.app.service;
 
+import android.content.Context;
 import android.database.DataSetObservable;
 import android.database.DataSetObserver;
+import android.widget.Toast;
 
-import com.google.inject.Inject;
+import com.google.common.collect.Sets;
 import com.google.inject.Singleton;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import de.chalkup.app.model.Boulder;
 import de.chalkup.app.model.Gym;
@@ -20,25 +24,48 @@ public class GymService {
     private final DataSetObservable gymsObservable = new DataSetObservable();
     private final Map<Long, DataSetObservable> gymObservables =
             new HashMap<Long, DataSetObservable>();
+
     private List<Gym> gyms = new ArrayList<Gym>();
 
     GymService() {
     }
 
-    public void syncGyms() {
-        new LoadGymsAsyncTask(this).execute(null);
+    public void syncGyms(final Context context, final GymSyncCallback callback) {
+        callback.syncStarted();
+        new LoadGymsAsyncTask().execute(new LoadGymsCallback() {
+            @Override
+            public void gymsLoaded(List<Gym> gyms) {
+                setGyms(gyms);
+                callback.syncFinished();
+            }
+
+            @Override
+            public void gymsLoadingFailed() {
+                Toast.makeText(context, "Failed to load gyms", Toast.LENGTH_SHORT).show();
+                callback.syncFinished();
+            }
+        });
     }
 
     public List<Gym> getGyms() {
         return Collections.unmodifiableList(gyms);
     }
 
-    public void setGyms(List<Gym> gyms) {
+    private void setGyms(List<Gym> gyms) {
         this.gyms = gyms;
 
-        gymObservables.clear();
+        Set<Long> newIdSet = new HashSet<Long>();
+        Set<Long> oldIdSet = gymObservables.keySet();
+
         for (Gym gym : gyms) {
-            gymObservables.put(gym.getId(), new DataSetObservable());
+            newIdSet.add(gym.getId());
+        }
+
+        for (Long gymId : Sets.difference(newIdSet, oldIdSet)) {
+            gymObservables.put(gymId, new DataSetObservable());
+        }
+        for (Long gymId : Sets.difference(oldIdSet, newIdSet)) {
+            gymObservables.remove(gymId);
         }
 
         gymsObservable.notifyChanged();

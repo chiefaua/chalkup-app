@@ -1,9 +1,9 @@
 package de.chalkup.app.service;
 
+import android.content.Context;
 import android.os.AsyncTask;
 import android.util.Log;
-
-import com.google.inject.Singleton;
+import android.widget.Toast;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.http.Header;
@@ -26,28 +26,31 @@ import de.chalkup.app.model.Boulder;
 import de.chalkup.app.model.Grade;
 import de.chalkup.app.model.Gym;
 
-@Singleton
-public class LoadGymsAsyncTask extends AsyncTask<Void, Void, List<Gym>> {
+public class LoadGymsAsyncTask extends AsyncTask<LoadGymsCallback, Void, List<Gym>> {
     private static final String TAG = LoadGymsAsyncTask.class.getName();
 
     private static final String API_PROTOCOL = "http";
     private static final String API_DOMAIN = "demo.chalkup.de";
-    private final GymService gymService;
     private final HttpClient httpClient;
+    private LoadGymsCallback callback;
 
-    public LoadGymsAsyncTask(GymService gymService) {
-        this.gymService = gymService;
+    public LoadGymsAsyncTask() {
         this.httpClient = new DefaultHttpClient(new BasicHttpParams());
     }
 
     @Override
-    protected List<Gym> doInBackground(Void... params) {
+    protected List<Gym> doInBackground(LoadGymsCallback... params) {
+        callback = params[0];
         return loadGyms();
     }
 
     @Override
     protected void onPostExecute(List<Gym> gyms) {
-        gymService.setGyms(gyms);
+        if (gyms != null) {
+            callback.gymsLoaded(gyms);
+        } else {
+            callback.gymsLoadingFailed();
+        }
     }
 
     private List<Gym> loadGyms() {

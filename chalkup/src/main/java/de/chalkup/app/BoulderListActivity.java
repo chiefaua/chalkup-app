@@ -12,12 +12,13 @@ import com.google.inject.Inject;
 import de.chalkup.app.adapter.GymNavigationAdapter;
 import de.chalkup.app.model.Boulder;
 import de.chalkup.app.model.Gym;
-import de.chalkup.app.service.GymService;
 import de.chalkup.app.service.GymNotFoundException;
+import de.chalkup.app.service.GymService;
+import de.chalkup.app.service.GymSyncCallback;
 import roboguice.activity.RoboFragmentActivity;
 
 public class BoulderListActivity extends RoboFragmentActivity
-        implements BoulderListFragment.Callback, ActionBar.OnNavigationListener {
+        implements BoulderListFragment.Callback, ActionBar.OnNavigationListener, GymSyncCallback {
 
     private static final String TAG = BoulderListActivity.class.getName();
 
@@ -25,6 +26,9 @@ public class BoulderListActivity extends RoboFragmentActivity
     private GymService gymService;
     @Inject
     private GymNavigationAdapter gymNavigationAdapter;
+
+    private boolean refreshingGyms = false;
+    private Menu optionsMenu;
 
     /**
      * Whether or not the activity is in two-pane mode.
@@ -55,26 +59,55 @@ public class BoulderListActivity extends RoboFragmentActivity
         actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_LIST);
         actionBar.setListNavigationCallbacks(gymNavigationAdapter, this);
 
-        gymService.syncGyms();
+        gymService.syncGyms(this, this);
     }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
+        this.optionsMenu = menu;
+
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.boulder_list_actions, menu);
+        updateRefreshButton();
         return super.onCreateOptionsMenu(menu);
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        if (item.getItemId() == R.id.add_boulder) {
+        if (item.getItemId() == R.id.add_boulder && activeGym != null) {
             Boulder boulder = new Boulder(activeGym, "new boulder");
             gymService.addBoulderToGym(activeGym, boulder);
             onBoulderSelected(boulder);
             return true;
+        } else if (item.getItemId() == R.id.refresh_boulder) {
+            gymService.syncGyms(this, this);
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public void syncStarted() {
+        refreshingGyms = true;
+        updateRefreshButton();
+    }
+
+    @Override
+    public void syncFinished() {
+        refreshingGyms = false;
+        updateRefreshButton();
+    }
+
+    private void updateRefreshButton() {
+        if (optionsMenu != null) {
+            final MenuItem refreshItem = optionsMenu
+                    .findItem(R.id.refresh_boulder);
+            if (refreshingGyms) {
+                refreshItem.setActionView(R.layout.actionbar_progress);
+            } else {
+                refreshItem.setActionView(null);
+            }
+        }
     }
 
     @Override
