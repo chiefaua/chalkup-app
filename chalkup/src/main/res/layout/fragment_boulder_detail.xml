@@ -1,55 +1,60 @@
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     tools:context="de.chalkup.app.BoulderDetailFragment"
-    android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <ImageView
-        android:layout_width="fill_parent"
-        android:layout_height="250dp"
-        android:id="@+id/boulder_image"
-        android:layout_gravity="center_horizontal" />
-
-    <RelativeLayout
-        android:id="@+id/loading_panel"
-        android:layout_width="fill_parent"
-        android:layout_height="fill_parent"
-        android:background="#DD111111"
-        android:gravity="center"
-        android:visibility="gone">
-        <ProgressBar
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:indeterminate="true" />
-    </RelativeLayout>
-
     <LinearLayout
-        android:orientation="horizontal"
+        android:orientation="vertical"
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
-        <ImageButton
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:id="@+id/image_from_camera"
-            android:layout_gravity="bottom"
-            android:src="@android:drawable/ic_menu_camera"
-            android:layout_weight="1" />
+        <ImageView
+            android:layout_width="fill_parent"
+            android:layout_height="250dp"
+            android:id="@+id/boulder_image"
+            android:layout_gravity="center_horizontal" />
 
-        <ImageButton
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:id="@+id/image_from_gallery"
-            android:layout_gravity="bottom"
-            android:src="@android:drawable/ic_menu_gallery"
-            android:layout_weight="1" />
+        <RelativeLayout
+            android:id="@+id/loading_panel"
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:background="#DD111111"
+            android:gravity="center"
+            android:visibility="gone">
+
+            <ProgressBar
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:indeterminate="true" />
+        </RelativeLayout>
+
+        <LinearLayout
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <ImageButton
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/image_from_camera"
+                android:layout_gravity="bottom"
+                android:src="@android:drawable/ic_menu_camera"
+                android:layout_weight="1" />
+
+            <ImageButton
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/image_from_gallery"
+                android:layout_gravity="bottom"
+                android:src="@android:drawable/ic_menu_gallery"
+                android:layout_weight="1" />
+        </LinearLayout>
+
+        <ImageView
+            android:layout_width="fill_parent"
+            android:layout_height="250dp"
+            android:id="@+id/floorplan"
+            android:layout_gravity="center_horizontal" />
     </LinearLayout>
-
-    <ImageView
-        android:layout_width="fill_parent"
-        android:layout_height="250dp"
-        android:id="@+id/floorplan"
-        android:layout_gravity="center_horizontal" />
-
-</LinearLayout>
+</ScrollView>
