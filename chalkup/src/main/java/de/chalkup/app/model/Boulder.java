@@ -14,17 +14,20 @@ public class Boulder {
     private final String name;
     private Grade grade;
     private URL photoUrl;
+    private final BoulderLocation location;
 
     public Boulder(Gym gym, String name) {
-        this(gym, INVALID_ID, name, Grade.zero(), null);
+        this(gym, INVALID_ID, name, Grade.zero(), null, new BoulderLocation(0.0, 0.0));
     }
 
-    public Boulder(Gym gym, long id, String name, Grade grade, URL photoUrl) {
+    public Boulder(Gym gym, long id, String name, Grade grade, URL photoUrl,
+                   BoulderLocation location) {
         this.gym = gym;
         this.id = id;
         this.name = name;
         this.grade = grade;
         this.photoUrl = photoUrl;
+        this.location = location;
     }
 
     public boolean isPersisted() {
@@ -67,11 +70,15 @@ public class Boulder {
     }
 
     public File getCachePhotoFile(Context context) {
-        return context.getFileStreamPath(getGym().getId() + "_" + getId());
+        return new File(context.getCacheDir(), getGym().getId() + "_" + getId());
     }
 
     public boolean hasCachedPhoto(Context context) {
         return getCachePhotoFile(context).isFile();
+    }
+
+    public BoulderLocation getLocation() {
+        return location;
     }
 
     public long getLastSyncedTimestamp() {

@@ -82,13 +82,13 @@ public class SyncBoulderAsyncTask extends AsyncTask<Boulder, Void, Boulder> {
 
     private void downloadPhoto(Boulder boulder) throws IOException {
         File targetFile = boulder.getCachePhotoFile(application);
-        backendService.downloadPhoto(boulder.getPhotoUrl(), targetFile);
+        backendService.downloadFile(boulder.getPhotoUrl(), targetFile);
         boulder.setLastSyncedTimestamp(targetFile.lastModified());
     }
 
     private void uploadPhoto(Boulder boulder) throws IOException {
         File sourceFile = boulder.getCachePhotoFile(application);
-        URL photoUrl = backendService.uploadPhoto(sourceFile,
+        URL photoUrl = backendService.uploadFile(sourceFile,
                 "/boulders/" + boulder.getId() + "/photo",
                 "image/jpeg");
         boulder.setPhotoUrl(photoUrl);

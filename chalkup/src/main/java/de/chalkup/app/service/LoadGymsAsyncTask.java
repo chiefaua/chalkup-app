@@ -1,6 +1,8 @@
 package de.chalkup.app.service;
 
+import android.app.Application;
 import android.content.Context;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.util.Log;
 
@@ -10,6 +12,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -17,6 +20,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import de.chalkup.app.model.Boulder;
+import de.chalkup.app.model.BoulderLocation;
+import de.chalkup.app.model.FloorPlan;
 import de.chalkup.app.model.Grade;
 import de.chalkup.app.model.Gym;
 import roboguice.RoboGuice;
@@ -24,6 +29,8 @@ import roboguice.RoboGuice;
 public class LoadGymsAsyncTask extends AsyncTask<Void, Void, List<Gym>> {
     private static final String TAG = LoadGymsAsyncTask.class.getName();
 
+    @Inject
+    private Application application;
     @Inject
     private BackendService backendService;
 
@@ -64,16 +71,42 @@ public class LoadGymsAsyncTask extends AsyncTask<Void, Void, List<Gym>> {
         }
     }
 
-    private List<Gym> parseGyms(JSONArray jsonGyms) throws JSONException {
+    private List<Gym> parseGyms(JSONArray jsonGyms) throws JSONException, IOException {
         List<Gym> gyms = new ArrayList<Gym>();
         for (int i = 0; i < jsonGyms.length(); i++) {
             JSONObject jsonGym = jsonGyms.getJSONObject(i);
             long id = jsonGym.getLong("id");
             String name = jsonGym.getString("name");
-            gyms.add(new Gym(id, name));
+
+            List<FloorPlan> floorPlans = loadFloorPlans(id, jsonGym.getJSONArray("floorPlans"));
+
+            // TODO: handle zero/multiple floor plans
+            gyms.add(new Gym(id, name, floorPlans.get(0)));
         }
 
         return gyms;
+    }
+
+    private List<FloorPlan> loadFloorPlans(long gymId, JSONArray jsonFloorPlans)
+            throws JSONException, IOException {
+        List<FloorPlan> floorPlans = new ArrayList<FloorPlan>();
+        for (int i = 0; i < jsonFloorPlans.length(); i++) {
+            JSONObject jsonFloorPlan = jsonFloorPlans.getJSONObject(i);
+            JSONObject jsonImg = jsonFloorPlan.getJSONObject("img");
+
+            long id = jsonFloorPlan.getLong("id");
+            int width = jsonImg.getInt("widthInPx");
+            int height = jsonImg.getInt("heightInPx");
+            String url = jsonImg.getString("url");
+            File floorPlansDir = new File(application.getCacheDir(), "floorplans");
+            floorPlansDir.mkdirs();
+            File floorPlanFile = new File(floorPlansDir, gymId + "_" + id);
+            backendService.downloadFile(url, floorPlanFile);
+
+            floorPlans.add(new FloorPlan(width, height, Uri.fromFile(floorPlanFile)));
+        }
+
+        return floorPlans;
     }
 
     private void loadBoulders(Gym gym) throws IOException, JSONException {
@@ -100,7 +133,13 @@ public class LoadGymsAsyncTask extends AsyncTask<Void, Void, List<Gym>> {
                 }
                 photoUrl = new URL(url);
             }
-            boulders.add(new Boulder(gym, id, colorName + " " + id, grade, photoUrl));
+
+            JSONObject jsonLocation = jsonBoulder.getJSONObject("location");
+            double locationX = jsonLocation.getDouble("x");
+            double locationY = jsonLocation.getDouble("y");
+            BoulderLocation location = new BoulderLocation(locationX, locationY);
+
+            boulders.add(new Boulder(gym, id, colorName + " " + id, grade, photoUrl, location));
         }
 
         return boulders;

@@ -6,7 +6,10 @@ import android.content.Intent;
 import android.content.pm.ResolveInfo;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Matrix;
+import android.graphics.Paint;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -33,6 +36,8 @@ import java.io.OutputStream;
 import java.util.List;
 
 import de.chalkup.app.model.Boulder;
+import de.chalkup.app.model.BoulderLocation;
+import de.chalkup.app.model.FloorPlan;
 import de.chalkup.app.model.Gym;
 import de.chalkup.app.service.EntityNotFoundException;
 import de.chalkup.app.service.GymService;
@@ -58,6 +63,9 @@ public class BoulderDetailFragment extends RoboFragment implements View.OnClickL
     private View loadingPanel;
     @InjectView(R.id.boulder_image)
     private ImageView imageView;
+
+    @InjectView(R.id.floorplan)
+    private ImageView floorPlanView;
 
     private Boulder boulder;
     private Uri imageCaptureUri;
@@ -98,6 +106,22 @@ public class BoulderDetailFragment extends RoboFragment implements View.OnClickL
             getActivity().getActionBar().setTitle(boulder.getName());
             imageView.setImageResource(R.drawable.ic_launcher);
             new SyncBoulderAsyncTask(getActivity(), this).execute(boulder);
+
+            FloorPlan floorPlan = boulder.getGym().getFloorPlan();
+            Bitmap floorPlanBitmap = BitmapFactory.decodeFile(
+                    floorPlan.getUri().getPath());
+            Bitmap mutableBitmap = floorPlanBitmap.copy(floorPlanBitmap.getConfig(), true);
+            Canvas canvas = new Canvas(mutableBitmap);
+
+            BoulderLocation loc = boulder.getLocation();
+            Paint paint = new Paint();
+            paint.setColor(Color.RED);
+            canvas.drawCircle(
+                    (float) (floorPlan.getWidth() * loc.getX()),
+                    (float) (floorPlan.getHeight() * loc.getY()),
+                    25.0f, paint);
+
+            floorPlanView.setImageBitmap(mutableBitmap);
         }
     }
 

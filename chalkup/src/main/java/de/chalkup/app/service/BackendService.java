@@ -1,28 +1,24 @@
 package de.chalkup.app.service;
 
 import android.app.Application;
-import android.net.http.AndroidHttpClient;
+import android.net.http.HttpResponseCache;
+import android.os.Build;
+import android.util.Log;
 
 import com.google.common.net.HttpHeaders;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.http.Header;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPut;
-import org.apache.http.entity.FileEntity;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.URI;
-import java.net.URISyntaxException;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.URL;
 
 @Singleton
@@ -31,31 +27,36 @@ public class BackendService {
     private static final String API_PROTOCOL = "http";
     private static final String API_DOMAIN = "demo.chalkup.de";
 
-    private final HttpClient httpClient;
-
     @Inject
     public BackendService(Application application) {
-        this.httpClient = AndroidHttpClient.newInstance("chalkUp REST client", application);
+        try {
+            File httpCacheDir = new File(application.getCacheDir(), "http");
+            long httpCacheSize = 20 * 1024 * 1024; // 20 MiB
+            HttpResponseCache.install(httpCacheDir, httpCacheSize);
+        } catch (IOException e) {
+            Log.i(TAG, "HTTP response cache installation failed:" + e);
+        }
+
+        // Work around pre-Froyo bugs in HTTP connection reuse.
+        if (Integer.parseInt(Build.VERSION.SDK) < Build.VERSION_CODES.FROYO) {
+            System.setProperty("http.keepAlive", "false");
+        }
     }
 
     public String loadJSON(String path) throws IOException {
-        HttpGet get = new HttpGet(getBaseUrl() + path);
+        HttpURLConnection connection = null;
 
-        InputStream contentInputStream = null;
         try {
-            HttpResponse response = httpClient.execute(get);
-            HttpEntity entity = response.getEntity();
+            connection = (HttpURLConnection) getUrl(path).openConnection();
 
-            Header contentEncoding = entity.getContentEncoding();
-            contentInputStream = entity.getContent();
-
+            String contentEncoding = connection.getContentEncoding();
             if (contentEncoding != null) {
-                return IOUtils.toString(contentInputStream, contentEncoding.getValue());
+                return IOUtils.toString(connection.getInputStream(), contentEncoding);
             } else {
-                return IOUtils.toString(contentInputStream);
+                return IOUtils.toString(connection.getInputStream());
             }
         } finally {
-            IOUtils.closeQuietly(contentInputStream);
+            quietCloseConnection(connection);
         }
     }
 
@@ -63,50 +64,72 @@ public class BackendService {
         return API_PROTOCOL + "://" + API_DOMAIN;
     }
 
-    public void downloadPhoto(URL photoUrl, File targetFile) throws IOException {
-        HttpGet get = new HttpGet(urlToUri(photoUrl));
+    public void downloadFile(String path, File targetFile) throws IOException {
+        downloadFile(getUrl(path), targetFile);
+    }
 
-        InputStream contentInputStream = null;
+    public void downloadFile(URL fileUrl, File targetFile) throws IOException {
+        HttpURLConnection connection = null;
         OutputStream targetOutputStream = null;
         try {
-            HttpResponse response = httpClient.execute(get);
-            HttpEntity entity = response.getEntity();
-            contentInputStream = entity.getContent();
+            connection = (HttpURLConnection) fileUrl.openConnection();
+            if (targetFile.exists()) {
+                connection.setIfModifiedSince(targetFile.lastModified());
+            }
 
             targetOutputStream = new FileOutputStream(targetFile);
 
-            IOUtils.copy(contentInputStream, targetOutputStream);
+            IOUtils.copy(connection.getInputStream(), targetOutputStream);
+
+            IOUtils.closeQuietly(targetOutputStream);
+            targetFile.setLastModified(connection.getLastModified());
         } finally {
-            IOUtils.closeQuietly(contentInputStream);
+            quietCloseConnection(connection);
             IOUtils.closeQuietly(targetOutputStream);
         }
     }
 
-    public URL uploadPhoto(File sourceFile, String path, String contentType) throws IOException {
-        HttpPut put = new HttpPut(getBaseUrl() + path);
+    public URL uploadFile(File sourceFile, String path, String contentType) throws IOException {
+        HttpURLConnection connection = null;
+        InputStream sourceInputStream = null;
 
-        HttpEntity entity = new FileEntity(sourceFile, contentType);
-        put.setEntity(entity);
+        try {
+            connection = (HttpURLConnection) getUrl(path).openConnection();
+            connection.setDoOutput(true);
+            connection.setRequestMethod("PUT");
+            connection.setRequestProperty(HttpHeaders.CONTENT_TYPE, contentType);
+            connection.setFixedLengthStreamingMode((int) sourceFile.length());
 
-        HttpResponse response = httpClient.execute(put);
+            sourceInputStream = new FileInputStream(sourceFile);
 
-        Header locationHeader = response.getFirstHeader(HttpHeaders.LOCATION);
-        if (locationHeader != null) {
-            String photoUrl = locationHeader.getValue();
-            if (!photoUrl.startsWith("http")) {
-                photoUrl = getBaseUrl() + photoUrl;
+            IOUtils.copy(sourceInputStream, connection.getOutputStream());
+
+            String location = connection.getHeaderField(HttpHeaders.LOCATION);
+            if (location != null) {
+                if (!location.startsWith("http")) {
+                    location = getBaseUrl() + location;
+                }
+                return new URL(location);
+            } else {
+                return new URL(getBaseUrl() + path);
             }
-            return new URL(photoUrl);
-        } else {
-            return new URL(getBaseUrl() + path);
+        } finally {
+            quietCloseConnection(connection);
+            IOUtils.closeQuietly(sourceInputStream);
         }
     }
 
-    private URI urlToUri(URL url) {
+    private void quietCloseConnection(HttpURLConnection connection) {
+        if (connection != null) {
+            connection.disconnect();
+        }
+    }
+
+    private URL getUrl(String path) {
         try {
-            return url.toURI();
-        } catch (URISyntaxException e) {
-            throw new RuntimeException("Failed to convert URL to URI", e);
+            return new URL(getBaseUrl() + path);
+        } catch (MalformedURLException e) {
+            throw new RuntimeException("Failed to construct URL", e);
         }
     }
 }
