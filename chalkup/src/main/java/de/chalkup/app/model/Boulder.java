@@ -1,24 +1,30 @@
 package de.chalkup.app.model;
 
 import android.content.Context;
-import android.net.Uri;
+
+import java.io.File;
+import java.net.URL;
 
 public class Boulder {
     public static final long INVALID_ID = -1;
     private long id = INVALID_ID;
+    public static final long NEVER_SYNCED = -1;
+    private long lastSynced = NEVER_SYNCED;
     private final Gym gym;
     private final String name;
     private Grade grade;
+    private URL photoUrl;
 
     public Boulder(Gym gym, String name) {
-        this(gym, INVALID_ID, name, Grade.zero());
+        this(gym, INVALID_ID, name, Grade.zero(), null);
     }
 
-    public Boulder(Gym gym, long id, String name, Grade grade) {
+    public Boulder(Gym gym, long id, String name, Grade grade, URL photoUrl) {
         this.gym = gym;
         this.id = id;
         this.name = name;
         this.grade = grade;
+        this.photoUrl = photoUrl;
     }
 
     public boolean isPersisted() {
@@ -48,8 +54,32 @@ public class Boulder {
         return grade;
     }
 
-    public Uri getPhotoUri(Context context) {
-        return Uri.fromFile(context.getFileStreamPath(getGym().getId() + "_" + getId()));
+    public URL getPhotoUrl() {
+        return photoUrl;
+    }
+
+    public void setPhotoUrl(URL photoUrl) {
+        this.photoUrl = photoUrl;
+    }
+
+    public boolean hasPhoto() {
+        return photoUrl != null;
+    }
+
+    public File getCachePhotoFile(Context context) {
+        return context.getFileStreamPath(getGym().getId() + "_" + getId());
+    }
+
+    public boolean hasCachedPhoto(Context context) {
+        return getCachePhotoFile(context).isFile();
+    }
+
+    public long getLastSyncedTimestamp() {
+        return lastSynced;
+    }
+
+    public void setLastSyncedTimestamp(long lastSynced) {
+        this.lastSynced = lastSynced;
     }
 
     @Override

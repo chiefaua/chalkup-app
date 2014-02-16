@@ -12,6 +12,18 @@
         android:layout_gravity="center_horizontal"
         android:layout_weight="1" />
 
+    <RelativeLayout
+        android:id="@+id/loading_panel"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:background="#DD111111"
+        android:gravity="center">
+        <ProgressBar
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:indeterminate="true" />
+    </RelativeLayout>
+
     <LinearLayout
         android:orientation="horizontal"
         android:layout_width="match_parent"

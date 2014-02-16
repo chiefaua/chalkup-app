@@ -1,11 +1,14 @@
 package de.chalkup.app.service;
 
+import android.app.Application;
 import android.content.Context;
 import android.database.DataSetObservable;
 import android.database.DataSetObserver;
 import android.widget.Toast;
 
 import com.google.common.collect.Sets;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.inject.Singleton;
 
 import java.util.ArrayList;
@@ -26,6 +29,9 @@ public class GymService {
     private final Map<Long, DataSetObservable> gymObservables =
             new HashMap<Long, DataSetObservable>();
 
+    @Inject
+    private Application application;
+
     private List<Gym> gyms = new ArrayList<Gym>();
 
     GymService() {
@@ -33,7 +39,7 @@ public class GymService {
 
     public void syncGyms(final Context context, final GymSyncCallback callback) {
         callback.syncStarted();
-        new LoadGymsAsyncTask().execute(new LoadGymsCallback() {
+        new LoadGymsAsyncTask(application, new LoadGymsCallback() {
             @Override
             public void gymsLoaded(List<Gym> gyms) {
                 setGyms(gyms);
@@ -45,7 +51,7 @@ public class GymService {
                 Toast.makeText(context, R.string.gym_sync_failed, Toast.LENGTH_SHORT).show();
                 callback.syncFinished();
             }
-        });
+        }).execute();
     }
 
     public List<Gym> getGyms() {

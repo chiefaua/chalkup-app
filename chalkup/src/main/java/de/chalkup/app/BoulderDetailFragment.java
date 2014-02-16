@@ -5,11 +5,15 @@ import android.content.ComponentName;
 import android.content.Intent;
 import android.content.pm.ResolveInfo;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Matrix;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.util.Log;
+import android.util.Pair;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -19,26 +23,39 @@ import android.widget.Toast;
 import com.google.inject.Inject;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.util.List;
 
 import de.chalkup.app.model.Boulder;
 import de.chalkup.app.model.Gym;
 import de.chalkup.app.service.EntityNotFoundException;
 import de.chalkup.app.service.GymService;
+import de.chalkup.app.service.SyncBoulderAsyncTask;
+import de.chalkup.app.service.SyncBoulderCallback;
 import roboguice.fragment.RoboFragment;
 import roboguice.inject.InjectView;
 
-public class BoulderDetailFragment extends RoboFragment implements View.OnClickListener {
+public class BoulderDetailFragment extends RoboFragment implements View.OnClickListener,
+        SyncBoulderCallback {
     public static final String ARG_GYM_ID = "gym_id";
     public static final String ARG_BOULDER_ID = "boulder_id";
+
+    private static final int MAX_PHOTO_WIDTH = 500;
+    private static final int MAX_PHOTO_HEIGHT = 500;
+
     private static final String TAG = BoulderDetailFragment.class.getName();
 
     @Inject
     private GymService gymMgr;
 
+    @InjectView(R.id.loading_panel)
+    private View loadingPanel;
     @InjectView(R.id.boulder_image)
     private ImageView imageView;
 
@@ -79,14 +96,28 @@ public class BoulderDetailFragment extends RoboFragment implements View.OnClickL
 
         if (boulder != null) {
             getActivity().getActionBar().setTitle(boulder.getName());
-
-            Uri photoUri = boulder.getPhotoUri(getActivity().getApplicationContext());
-            if (new File(photoUri.getPath()).exists()) {
-                imageView.setImageURI(photoUri);
-            } else {
-                imageView.setImageResource(R.drawable.ic_launcher);
-            }
+            imageView.setImageResource(R.drawable.ic_launcher);
+            new SyncBoulderAsyncTask(getActivity(), this).execute(boulder);
         }
+    }
+
+    @Override
+    public void boulderSyncStarted() {
+        loadingPanel.setVisibility(View.VISIBLE);
+    }
+
+    @Override
+    public void boulderSynced(Boulder boulder) {
+        if (boulder.hasCachedPhoto(getActivity())) {
+            imageView.setImageURI(Uri.fromFile(boulder.getCachePhotoFile(getActivity())));
+        }
+        loadingPanel.setVisibility(View.GONE);
+    }
+
+    @Override
+    public void boulderSyncFailed() {
+        loadingPanel.setVisibility(View.GONE);
+        Toast.makeText(getActivity(), R.string.sync_boulder_failed, Toast.LENGTH_SHORT).show();
     }
 
     @Override
@@ -141,22 +172,80 @@ public class BoulderDetailFragment extends RoboFragment implements View.OnClickL
                 doCrop();
                 break;
             case CROP_IMAGE:
-                // force image reload by resetting to the initial value first
-                Uri photoUri = boulder.getPhotoUri(getActivity().getApplicationContext());
-                imageView.setImageResource(R.drawable.ic_launcher);
-                try {
-                    FileUtils.copyFile(new File(croppedImageUri.getPath()),
-                            new File(photoUri.getPath()));
-                } catch (IOException e) {
-                    Log.e(TAG, "Failed to copy cropped image", e);
-                    Toast.makeText(getActivity(), R.string.copy_cropped_image_failed,
-                            Toast.LENGTH_SHORT).show();
-                }
-                imageView.setImageURI(photoUri);
+                final File cachedPhotoFile =
+                        boulder.getCachePhotoFile(getActivity().getApplicationContext());
 
-                deleteFile(imageCaptureUri);
-                deleteFile(croppedImageUri);
+                new AsyncTask<Void, Void, Boolean>() {
+                    @Override
+                    protected void onPreExecute() {
+                        loadingPanel.setVisibility(View.VISIBLE);
+                    }
+
+                    @Override
+                    protected Boolean doInBackground(Void... params) {
+                        // force image reload by resetting to the initial value first
+                        imageView.setImageResource(R.drawable.ic_launcher);
+                        try {
+                            FileUtils.copyFile(new File(croppedImageUri.getPath()), cachedPhotoFile);
+
+                            scalePhotoToMaximumSize(cachedPhotoFile);
+                            return Boolean.TRUE;
+                        } catch (IOException e) {
+                            Log.e(TAG, "Failed to copy cropped image", e);
+                            return Boolean.FALSE;
+                        } finally {
+                            deleteFile(imageCaptureUri);
+                            deleteFile(croppedImageUri);
+                        }
+                    }
+
+                    @Override
+                    protected void onPostExecute(Boolean success) {
+                        if (success.booleanValue()) {
+                            imageView.setImageURI(Uri.fromFile(cachedPhotoFile));
+                            new SyncBoulderAsyncTask(getActivity(), BoulderDetailFragment.this)
+                                    .execute(boulder);
+                        } else {
+                            loadingPanel.setVisibility(View.GONE);
+                            Toast.makeText(getActivity(), R.string.copy_cropped_image_failed,
+                                    Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                }.execute();
+
                 break;
+        }
+    }
+
+    private void scalePhotoToMaximumSize(File cachedPhotoFile) throws FileNotFoundException {
+        Bitmap bitmap = BitmapFactory.decodeFile(cachedPhotoFile.getPath());
+
+        if (bitmap == null) {
+            return;
+        }
+
+        int height = bitmap.getHeight();
+        int width = bitmap.getWidth();
+
+        if (height <= MAX_PHOTO_HEIGHT && width <= MAX_PHOTO_WIDTH) {
+            return;
+        }
+
+        float scale = Math.min((float) MAX_PHOTO_HEIGHT / (float) height,
+                (float) MAX_PHOTO_WIDTH / (float) width);
+
+        Matrix matrix = new Matrix();
+        matrix.postScale(scale, scale);
+
+        Bitmap scaledBitmap = Bitmap.createBitmap(bitmap, 0, 0, width, height, matrix, true);
+        bitmap.recycle();
+
+        OutputStream os = null;
+        try {
+            os = new FileOutputStream(cachedPhotoFile);
+            scaledBitmap.compress(Bitmap.CompressFormat.JPEG, 90, os);
+        } finally {
+            IOUtils.closeQuietly(os);
         }
     }
 
@@ -180,7 +269,6 @@ public class BoulderDetailFragment extends RoboFragment implements View.OnClickL
 
             intent.putExtra("crop", "true");
             intent.putExtra("noFaceDetection", true);
-            intent.putExtra("scale", true);
             intent.putExtra(MediaStore.EXTRA_OUTPUT, croppedImageUri);
             intent.putExtra("outputFormat", Bitmap.CompressFormat.JPEG.name());
 
