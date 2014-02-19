@@ -15,8 +15,8 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
+import android.support.v4.content.FileProvider;
 import android.util.Log;
-import android.util.Pair;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -198,6 +198,8 @@ public class BoulderDetailFragment extends RoboFragment implements View.OnClickL
             case CROP_IMAGE:
                 final File cachedPhotoFile =
                         boulder.getCachePhotoFile(getActivity().getApplicationContext());
+                getActivity().revokeUriPermission(croppedImageUri,
+                        Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
 
                 new AsyncTask<Void, Void, Boolean>() {
                     @Override
@@ -285,18 +287,24 @@ public class BoulderDetailFragment extends RoboFragment implements View.OnClickL
             Toast.makeText(getActivity(), R.string.crop_app_not_found, Toast.LENGTH_SHORT).show();
             return;
         } else {
+            ResolveInfo res = list.get(0);
+
+
+            File croppedImagesPath = new File(getActivity().getApplicationContext().getCacheDir(),
+                    "cropped_images");
+            croppedImagesPath.mkdirs();
+            File croppedImage = new File(croppedImagesPath, "temp.jpg");
+            croppedImageUri = FileProvider.getUriForFile(getActivity(),
+                    "de.chalkup.app.fileprovider", croppedImage);
+            getActivity().grantUriPermission(res.activityInfo.packageName, croppedImageUri,
+                    Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+
             intent.setData(imageCaptureUri);
-
-            croppedImageUri = Uri.fromFile(
-                    new File(getActivity().getApplicationContext().getExternalCacheDir(),
-                            "temp.jpg"));
-
             intent.putExtra("crop", "true");
             intent.putExtra("noFaceDetection", true);
             intent.putExtra(MediaStore.EXTRA_OUTPUT, croppedImageUri);
             intent.putExtra("outputFormat", Bitmap.CompressFormat.JPEG.name());
 
-            ResolveInfo res = list.get(0);
             intent.setComponent(new ComponentName(
                     res.activityInfo.packageName, res.activityInfo.name));
 

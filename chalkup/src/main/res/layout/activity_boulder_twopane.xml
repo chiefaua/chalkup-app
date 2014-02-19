@@ -11,7 +11,7 @@
     tools:context="de.chalkup.app.BoulderListActivity">
 
     <fragment
-        android:id="@+id/boulder_list"
+        android:id="@+id/boulder_list_container"
         android:name="de.chalkup.app.BoulderListFragment"
         android:layout_width="0dp"
         android:layout_height="match_parent"

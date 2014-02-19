@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="de.chalkup.app" >
+    package="de.chalkup.app">
 
     <uses-permission android:name="android.permission.MANAGE_DOCUMENTS" />
     <uses-permission android:name="android.permission.INTERNET" />
@@ -9,10 +9,10 @@
         android:allowBackup="true"
         android:icon="@drawable/ic_launcher"
         android:label="@string/app_name"
-        android:theme="@style/AppTheme" >
+        android:theme="@style/AppTheme">
         <activity
             android:name="de.chalkup.app.MainActivity"
-            android:label="@string/app_name" >
+            android:label="@string/app_name">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -20,11 +20,10 @@
         </activity>
         <activity
             android:name="de.chalkup.app.BoulderListActivity"
-            android:parentActivityName="de.chalkup.app.MainActivity" >
-        </activity>
+            android:parentActivityName="de.chalkup.app.MainActivity"></activity>
         <activity
             android:name="de.chalkup.app.BoulderDetailActivity"
-            android:parentActivityName="de.chalkup.app.BoulderListActivity" >
+            android:parentActivityName="de.chalkup.app.BoulderListActivity">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="de.chalkup.app.BoulderListActivity" />
@@ -32,16 +31,25 @@
         <activity
             android:name="de.chalkup.app.SessionListActivity"
             android:label="@string/title_sessions"
-            android:parentActivityName="de.chalkup.app.MainActivity" >
-        </activity>
+            android:parentActivityName="de.chalkup.app.MainActivity"></activity>
         <activity
             android:name="de.chalkup.app.SessionDetailActivity"
             android:label="@string/title_session_detail"
-            android:parentActivityName="de.chalkup.app.SessionListActivity" >
+            android:parentActivityName="de.chalkup.app.SessionListActivity">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="de.chalkup.app.SessionListActivity" />
         </activity>
+
+        <provider
+            android:name="android.support.v4.content.FileProvider"
+            android:authorities="de.chalkup.app.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
     </application>
 
 </manifest>

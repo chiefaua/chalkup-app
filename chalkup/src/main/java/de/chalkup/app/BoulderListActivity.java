@@ -48,7 +48,7 @@ public class BoulderListActivity extends RoboFragmentActivity
             // In two-pane mode, list items should be given the
             // 'activated' state when touched.
             ((BoulderListFragment) getSupportFragmentManager()
-                    .findFragmentById(R.id.boulder_list))
+                    .findFragmentById(R.id.boulder_list_container))
                     .setActivateOnItemClick(true);
         }
 

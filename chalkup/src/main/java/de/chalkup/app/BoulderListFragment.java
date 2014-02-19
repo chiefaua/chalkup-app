@@ -45,17 +45,16 @@ public class BoulderListFragment extends RoboListFragment {
         if (getArguments() != null && getArguments().containsKey(ARG_GYM_ID)) {
             try {
                 activeGym = gymService.getGym(getArguments().getLong(ARG_GYM_ID));
+
+                setListAdapter(new BoulderListAdapter(getActivity(), activeGym));
+
+                if (savedInstanceState != null
+                        && savedInstanceState.containsKey(STATE_ACTIVATED_BOULDER)) {
+                    setActivatedPosition(savedInstanceState.getInt(STATE_ACTIVATED_BOULDER));
+                }
             } catch (GymNotFoundException e) {
                 Log.e(TAG, "Failed to find active gym", e);
-                return;
             }
-        }
-
-        setListAdapter(new BoulderListAdapter(getActivity(), activeGym));
-
-        if (savedInstanceState != null
-                && savedInstanceState.containsKey(STATE_ACTIVATED_BOULDER)) {
-            setActivatedPosition(savedInstanceState.getInt(STATE_ACTIVATED_BOULDER));
         }
     }
 
