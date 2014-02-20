@@ -3,18 +3,23 @@ package de.chalkup.app;
 import android.app.Activity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.ListView;
 
 import com.google.inject.Inject;
 
 import de.chalkup.app.adapter.BoulderListAdapter;
 import de.chalkup.app.model.Boulder;
+import de.chalkup.app.model.FloorPlan;
 import de.chalkup.app.model.Gym;
 import de.chalkup.app.service.BoulderNotFoundException;
 import de.chalkup.app.service.GymService;
 import de.chalkup.app.service.GymNotFoundException;
+import de.chalkup.app.widget.FloorPlanView;
 import roboguice.fragment.RoboListFragment;
+import roboguice.inject.InjectView;
 
 public class BoulderListFragment extends RoboListFragment {
     public static final String ARG_GYM_ID = "gym_id";
@@ -31,11 +36,20 @@ public class BoulderListFragment extends RoboListFragment {
 
     @Inject
     private GymService gymService;
+
+    @InjectView(R.id.floorplan)
+    private FloorPlanView floorPlanView;
+
     private int activatedPosition = ListView.INVALID_POSITION;
 
     private Gym activeGym;
 
     public BoulderListFragment() {
+    }
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        return inflater.inflate(R.layout.fragment_boulder_list, container, false);
     }
 
     @Override
@@ -48,6 +62,11 @@ public class BoulderListFragment extends RoboListFragment {
 
                 setListAdapter(new BoulderListAdapter(getActivity(), activeGym));
 
+                floorPlanView.setFloorPlan(activeGym.getFloorPlan());
+                for (Boulder boulder : activeGym.getBoulders()) {
+                    floorPlanView.addBoulder(boulder);
+                }
+
                 if (savedInstanceState != null
                         && savedInstanceState.containsKey(STATE_ACTIVATED_BOULDER)) {
                     setActivatedPosition(savedInstanceState.getInt(STATE_ACTIVATED_BOULDER));
@@ -56,6 +75,11 @@ public class BoulderListFragment extends RoboListFragment {
                 Log.e(TAG, "Failed to find active gym", e);
             }
         }
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
     }
 
     @Override

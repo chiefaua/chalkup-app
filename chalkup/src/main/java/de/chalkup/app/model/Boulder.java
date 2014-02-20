@@ -1,6 +1,7 @@
 package de.chalkup.app.model;
 
 import android.content.Context;
+import android.graphics.Color;
 
 import java.io.File;
 import java.net.URL;
@@ -12,19 +13,21 @@ public class Boulder {
     private long lastSynced = NEVER_SYNCED;
     private final Gym gym;
     private final String name;
-    private Grade grade;
-    private URL photoUrl;
     private final BoulderLocation location;
+    private Grade grade;
+    private int color;
+    private URL photoUrl;
 
     public Boulder(Gym gym, String name) {
-        this(gym, INVALID_ID, name, Grade.zero(), null, new BoulderLocation(0.0, 0.0));
+        this(gym, INVALID_ID, name, Grade.zero(), Color.BLACK, null, new BoulderLocation(0.0, 0.0));
     }
 
-    public Boulder(Gym gym, long id, String name, Grade grade, URL photoUrl,
+    public Boulder(Gym gym, long id, String name, Grade grade, int color, URL photoUrl,
                    BoulderLocation location) {
         this.gym = gym;
         this.id = id;
         this.name = name;
+        this.color = color;
         this.grade = grade;
         this.photoUrl = photoUrl;
         this.location = location;
@@ -51,6 +54,10 @@ public class Boulder {
 
     public String getName() {
         return name;
+    }
+
+    public int getColor() {
+        return color;
     }
 
     public Grade getGrade() {

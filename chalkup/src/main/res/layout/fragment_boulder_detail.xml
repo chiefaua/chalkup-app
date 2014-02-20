@@ -1,48 +1,53 @@
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     tools:context="de.chalkup.app.BoulderDetailFragment"
-    android:orientation="vertical"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content">
-
-    <ImageView
-        android:layout_width="match_parent"
-        android:layout_height="200dp"
-        android:id="@+id/boulder_image" />
+    android:layout_height="match_parent">
 
     <LinearLayout
-        android:orientation="horizontal"
+        android:orientation="vertical"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="match_parent">
 
-        <ImageButton
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:id="@+id/image_from_camera"
-            android:layout_gravity="bottom"
-            android:src="@android:drawable/ic_menu_camera"
-            android:layout_weight="1" />
+        <ImageView
+            android:layout_width="match_parent"
+            android:layout_height="200dp"
+            android:id="@+id/boulder_image" />
 
-        <ImageButton
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:id="@+id/image_from_gallery"
-            android:layout_gravity="bottom"
-            android:src="@android:drawable/ic_menu_gallery"
-            android:layout_weight="1" />
+        <LinearLayout
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <ImageButton
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/image_from_camera"
+                android:layout_gravity="bottom"
+                android:src="@android:drawable/ic_menu_camera"
+                android:layout_weight="1" />
+
+            <ImageButton
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/image_from_gallery"
+                android:layout_gravity="bottom"
+                android:src="@android:drawable/ic_menu_gallery"
+                android:layout_weight="1" />
+        </LinearLayout>
+
+        <de.chalkup.app.widget.FloorPlanView
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:id="@+id/floorplan" />
     </LinearLayout>
-
-    <de.chalkup.app.widget.TouchImageView
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:id="@+id/floorplan" />
 
     <RelativeLayout
         android:id="@+id/loading_panel"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="#DD111111"
+        android:background="#AA111111"
         android:gravity="center"
         android:visibility="gone">
 
@@ -51,4 +56,4 @@
             android:layout_height="wrap_content"
             android:indeterminate="true" />
     </RelativeLayout>
-</LinearLayout>
+</FrameLayout>

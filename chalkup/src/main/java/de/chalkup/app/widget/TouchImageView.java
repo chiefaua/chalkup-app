@@ -90,20 +90,20 @@ public class TouchImageView extends ImageView {
 
     public TouchImageView(Context context) {
         super(context);
-        sharedConstructing(context);
+        sharedConstructor(context);
     }
 
     public TouchImageView(Context context, AttributeSet attrs) {
         super(context, attrs);
-        sharedConstructing(context);
+        sharedConstructor(context);
     }
 
     public TouchImageView(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
-        sharedConstructing(context);
+        sharedConstructor(context);
     }
 
-    private void sharedConstructing(Context context) {
+    protected void sharedConstructor(Context context) {
         super.setClickable(true);
         this.context = context;
         mScaleDetector = new ScaleGestureDetector(context, new ScaleListener());
@@ -277,6 +277,29 @@ public class TouchImageView extends ImageView {
      */
     public PointF getDrawablePointFromTouchPoint(PointF p) {
         return transformCoordTouchToBitmap(p.x, p.y, true);
+    }
+
+    /**
+     * For a given point on the drawable, returns the point relative to the
+     * original view's coordinate system.
+     *
+     * @param x
+     * @param y
+     * @return PointF relative to view's coordinate system.
+     */
+    public PointF getViewPointFromDrawablePoint(float x, float y) {
+        return transformCoordBitmapToTouch(x, y);
+    }
+
+    /**
+     * For a given point on the drawable, returns the point relative to the
+     * original view's coordinate system.
+     *
+     * @param p
+     * @return PointF relative to view's coordinate system.
+     */
+    public PointF getViewPointFromDrawablePoint(PointF p) {
+        return transformCoordBitmapToTouch(p.x, p.y);
     }
 
     /**

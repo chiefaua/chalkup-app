@@ -59,7 +59,7 @@ public class BoulderListActivity extends RoboFragmentActivity
         actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_LIST);
         actionBar.setListNavigationCallbacks(gymNavigationAdapter, this);
 
-        gymService.syncGyms(this, this);
+        gymService.syncGyms(this, GymService.SyncMode.FAST_FROM_CACHE, this);
     }
 
     @Override
@@ -80,7 +80,7 @@ public class BoulderListActivity extends RoboFragmentActivity
             onBoulderSelected(boulder);
             return true;
         } else if (item.getItemId() == R.id.refresh_boulder) {
-            gymService.syncGyms(this, this);
+            gymService.syncGyms(this, GymService.SyncMode.ALLOW_CACHE, this);
         }
 
         return super.onOptionsItemSelected(item);

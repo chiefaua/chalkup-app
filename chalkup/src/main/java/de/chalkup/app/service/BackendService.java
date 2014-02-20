@@ -44,10 +44,19 @@ public class BackendService {
     }
 
     public String loadJSON(String path) throws IOException {
+        return loadJSON(path, null);
+    }
+
+    public String loadJSON(String path, Integer timeoutMillis) throws IOException {
         HttpURLConnection connection = null;
 
         try {
             connection = (HttpURLConnection) getUrl(path).openConnection();
+
+            if (timeoutMillis != null) {
+                connection.setConnectTimeout(timeoutMillis);
+                connection.setReadTimeout(timeoutMillis);
+            }
 
             String contentEncoding = connection.getContentEncoding();
             if (contentEncoding != null) {
@@ -65,14 +74,28 @@ public class BackendService {
     }
 
     public void downloadFile(String path, File targetFile) throws IOException {
-        downloadFile(getUrl(path), targetFile);
+        downloadFile(path, targetFile, null);
+    }
+
+    public void downloadFile(String path, File targetFile, Integer timeoutMillis) throws IOException {
+        downloadFile(getUrl(path), targetFile, timeoutMillis);
     }
 
     public void downloadFile(URL fileUrl, File targetFile) throws IOException {
+        downloadFile(fileUrl, targetFile, null);
+    }
+
+    public void downloadFile(URL fileUrl, File targetFile, Integer timeoutMillis) throws IOException {
         HttpURLConnection connection = null;
         OutputStream targetOutputStream = null;
         try {
             connection = (HttpURLConnection) fileUrl.openConnection();
+
+            if (timeoutMillis != null) {
+                connection.setConnectTimeout(timeoutMillis);
+                connection.setReadTimeout(timeoutMillis);
+            }
+
             if (targetFile.exists()) {
                 connection.setIfModifiedSince(targetFile.lastModified());
             }

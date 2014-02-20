@@ -32,6 +32,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.List;
 
@@ -43,6 +44,7 @@ import de.chalkup.app.service.EntityNotFoundException;
 import de.chalkup.app.service.GymService;
 import de.chalkup.app.service.SyncBoulderAsyncTask;
 import de.chalkup.app.service.SyncBoulderCallback;
+import de.chalkup.app.widget.FloorPlanView;
 import roboguice.fragment.RoboFragment;
 import roboguice.inject.InjectView;
 
@@ -65,7 +67,7 @@ public class BoulderDetailFragment extends RoboFragment implements View.OnClickL
     private ImageView imageView;
 
     @InjectView(R.id.floorplan)
-    private ImageView floorPlanView;
+    private FloorPlanView floorPlanView;
 
     private Boulder boulder;
     private Uri imageCaptureUri;
@@ -108,20 +110,8 @@ public class BoulderDetailFragment extends RoboFragment implements View.OnClickL
             new SyncBoulderAsyncTask(getActivity(), this).execute(boulder);
 
             FloorPlan floorPlan = boulder.getGym().getFloorPlan();
-            Bitmap floorPlanBitmap = BitmapFactory.decodeFile(
-                    floorPlan.getUri().getPath());
-            Bitmap mutableBitmap = floorPlanBitmap.copy(floorPlanBitmap.getConfig(), true);
-            Canvas canvas = new Canvas(mutableBitmap);
-
-            BoulderLocation loc = boulder.getLocation();
-            Paint paint = new Paint();
-            paint.setColor(Color.RED);
-            canvas.drawCircle(
-                    (float) (floorPlan.getWidth() * loc.getX()),
-                    (float) (floorPlan.getHeight() * loc.getY()),
-                    25.0f, paint);
-
-            floorPlanView.setImageBitmap(mutableBitmap);
+            floorPlanView.setFloorPlan(floorPlan);
+            floorPlanView.addBoulder(boulder);
         }
     }
 
@@ -198,8 +188,6 @@ public class BoulderDetailFragment extends RoboFragment implements View.OnClickL
             case CROP_IMAGE:
                 final File cachedPhotoFile =
                         boulder.getCachePhotoFile(getActivity().getApplicationContext());
-                getActivity().revokeUriPermission(croppedImageUri,
-                        Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
 
                 new AsyncTask<Void, Void, Boolean>() {
                     @Override
@@ -211,8 +199,13 @@ public class BoulderDetailFragment extends RoboFragment implements View.OnClickL
                     protected Boolean doInBackground(Void... params) {
                         // force image reload by resetting to the initial value first
                         imageView.setImageResource(R.drawable.ic_launcher);
+                        InputStream is = null;
+                        OutputStream os = null;
                         try {
-                            FileUtils.copyFile(new File(croppedImageUri.getPath()), cachedPhotoFile);
+                            is = getActivity().getContentResolver()
+                                    .openInputStream(croppedImageUri);
+                            os = FileUtils.openOutputStream(cachedPhotoFile);
+                            IOUtils.copy(is, os);
 
                             scalePhotoToMaximumSize(cachedPhotoFile);
                             return Boolean.TRUE;
@@ -220,6 +213,13 @@ public class BoulderDetailFragment extends RoboFragment implements View.OnClickL
                             Log.e(TAG, "Failed to copy cropped image", e);
                             return Boolean.FALSE;
                         } finally {
+                            IOUtils.closeQuietly(is);
+                            IOUtils.closeQuietly(os);
+
+                            getActivity().revokeUriPermission(croppedImageUri,
+                                    Intent.FLAG_GRANT_WRITE_URI_PERMISSION |
+                                            Intent.FLAG_GRANT_READ_URI_PERMISSION);
+
                             deleteFile(imageCaptureUri);
                             deleteFile(croppedImageUri);
                         }
