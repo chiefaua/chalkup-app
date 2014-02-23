@@ -10,13 +10,14 @@ import android.widget.ListView;
 
 import com.google.inject.Inject;
 
+import java.util.Collections;
+
 import de.chalkup.app.adapter.BoulderListAdapter;
 import de.chalkup.app.model.Boulder;
-import de.chalkup.app.model.FloorPlan;
 import de.chalkup.app.model.Gym;
 import de.chalkup.app.service.BoulderNotFoundException;
-import de.chalkup.app.service.GymService;
 import de.chalkup.app.service.GymNotFoundException;
+import de.chalkup.app.service.GymService;
 import de.chalkup.app.widget.FloorPlanView;
 import roboguice.fragment.RoboListFragment;
 import roboguice.inject.InjectView;
@@ -62,11 +63,6 @@ public class BoulderListFragment extends RoboListFragment {
 
                 setListAdapter(new BoulderListAdapter(getActivity(), activeGym));
 
-                floorPlanView.setFloorPlan(activeGym.getFloorPlan());
-                for (Boulder boulder : activeGym.getBoulders()) {
-                    floorPlanView.addBoulder(boulder);
-                }
-
                 if (savedInstanceState != null
                         && savedInstanceState.containsKey(STATE_ACTIVATED_BOULDER)) {
                     setActivatedPosition(savedInstanceState.getInt(STATE_ACTIVATED_BOULDER));
@@ -105,7 +101,10 @@ public class BoulderListFragment extends RoboListFragment {
 
         try {
             Boulder boulder = activeGym.getBoulder(id);
-            callback.onBoulderSelected(boulder);
+
+            floorPlanView.setBoulders(Collections.singletonList(boulder));
+
+            // callback.onBoulderSelected(boulder);
         } catch (BoulderNotFoundException e) {
             Log.e(TAG, "Failed to get active boulder", e);
         }
@@ -117,12 +116,6 @@ public class BoulderListFragment extends RoboListFragment {
         if (activatedPosition != ListView.INVALID_POSITION) {
             outState.putInt(STATE_ACTIVATED_BOULDER, activatedPosition);
         }
-    }
-
-    public void setActivateOnItemClick(boolean activateOnItemClick) {
-        getListView().setChoiceMode(activateOnItemClick
-                ? ListView.CHOICE_MODE_SINGLE
-                : ListView.CHOICE_MODE_NONE);
     }
 
     private void setActivatedPosition(int position) {

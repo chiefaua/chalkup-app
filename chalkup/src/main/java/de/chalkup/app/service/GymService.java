@@ -94,6 +94,10 @@ public class GymService {
         gymObservables.get(gym.getId()).notifyChanged();
     }
 
+    public void boulderChanged(Boulder boulder) {
+        gymObservables.get(boulder.getGym().getId()).notifyChanged();
+    }
+
     public void registerGymsObserver(DataSetObserver observer) {
         gymsObservable.registerObserver(observer);
     }

@@ -12,21 +12,20 @@ public class Boulder {
     public static final long NEVER_SYNCED = -1;
     private long lastSynced = NEVER_SYNCED;
     private final Gym gym;
-    private final String name;
     private final BoulderLocation location;
     private Grade grade;
-    private int color;
+    private BoulderColor color;
     private URL photoUrl;
 
-    public Boulder(Gym gym, String name) {
-        this(gym, INVALID_ID, name, Grade.zero(), Color.BLACK, null, new BoulderLocation(0.0, 0.0));
+    public Boulder(Gym gym) {
+        this(gym, INVALID_ID, Grade.zero(), new BoulderColor(Color.BLACK, ""),
+                null, new BoulderLocation(0.0, 0.0));
     }
 
-    public Boulder(Gym gym, long id, String name, Grade grade, int color, URL photoUrl,
+    public Boulder(Gym gym, long id, Grade grade, BoulderColor color, URL photoUrl,
                    BoulderLocation location) {
         this.gym = gym;
         this.id = id;
-        this.name = name;
         this.color = color;
         this.grade = grade;
         this.photoUrl = photoUrl;
@@ -52,11 +51,7 @@ public class Boulder {
         return gym;
     }
 
-    public String getName() {
-        return name;
-    }
-
-    public int getColor() {
+    public BoulderColor getColor() {
         return color;
     }
 
@@ -77,7 +72,7 @@ public class Boulder {
     }
 
     public File getCachePhotoFile(Context context) {
-        return new File(context.getCacheDir(), getGym().getId() + "_" + getId());
+        return new File(context.getFilesDir(), getGym().getId() + "_" + getId());
     }
 
     public boolean hasCachedPhoto(Context context) {
@@ -98,6 +93,6 @@ public class Boulder {
 
     @Override
     public String toString() {
-        return name;
+        return color.getGermanName();
     }
 }

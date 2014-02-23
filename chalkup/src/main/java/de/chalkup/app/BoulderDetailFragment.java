@@ -6,10 +6,7 @@ import android.content.Intent;
 import android.content.pm.ResolveInfo;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.Matrix;
-import android.graphics.Paint;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -34,10 +31,10 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Collections;
 import java.util.List;
 
 import de.chalkup.app.model.Boulder;
-import de.chalkup.app.model.BoulderLocation;
 import de.chalkup.app.model.FloorPlan;
 import de.chalkup.app.model.Gym;
 import de.chalkup.app.service.EntityNotFoundException;
@@ -53,8 +50,8 @@ public class BoulderDetailFragment extends RoboFragment implements View.OnClickL
     public static final String ARG_GYM_ID = "gym_id";
     public static final String ARG_BOULDER_ID = "boulder_id";
 
-    private static final int MAX_PHOTO_WIDTH = 500;
-    private static final int MAX_PHOTO_HEIGHT = 500;
+    private static final int MAX_PHOTO_WIDTH = 800;
+    private static final int MAX_PHOTO_HEIGHT = 800;
 
     private static final String TAG = BoulderDetailFragment.class.getName();
 
@@ -105,13 +102,12 @@ public class BoulderDetailFragment extends RoboFragment implements View.OnClickL
         view.findViewById(R.id.image_from_gallery).setOnClickListener(this);
 
         if (boulder != null) {
-            getActivity().getActionBar().setTitle(boulder.getName());
             imageView.setImageResource(R.drawable.ic_launcher);
             new SyncBoulderAsyncTask(getActivity(), this).execute(boulder);
 
             FloorPlan floorPlan = boulder.getGym().getFloorPlan();
             floorPlanView.setFloorPlan(floorPlan);
-            floorPlanView.addBoulder(boulder);
+            floorPlanView.setBoulders(Collections.singletonList(boulder));
         }
     }
 
@@ -122,16 +118,21 @@ public class BoulderDetailFragment extends RoboFragment implements View.OnClickL
 
     @Override
     public void boulderSynced(Boulder boulder) {
-        if (boulder.hasCachedPhoto(getActivity())) {
-            imageView.setImageURI(Uri.fromFile(boulder.getCachePhotoFile(getActivity())));
-        }
+        updateImageView();
         loadingPanel.setVisibility(View.GONE);
     }
 
     @Override
     public void boulderSyncFailed() {
+        updateImageView();
         loadingPanel.setVisibility(View.GONE);
         Toast.makeText(getActivity(), R.string.sync_boulder_failed, Toast.LENGTH_SHORT).show();
+    }
+
+    private void updateImageView() {
+        if (boulder.hasCachedPhoto(getActivity())) {
+            imageView.setImageURI(Uri.fromFile(boulder.getCachePhotoFile(getActivity())));
+        }
     }
 
     @Override

@@ -10,9 +10,11 @@ import android.widget.TextView;
 
 import com.google.inject.Inject;
 
+import de.chalkup.app.R;
 import de.chalkup.app.model.Boulder;
 import de.chalkup.app.model.Gym;
 import de.chalkup.app.service.GymService;
+import de.chalkup.app.widget.BoulderListEntryView;
 import roboguice.RoboGuice;
 import roboguice.inject.RoboInjector;
 
@@ -65,16 +67,12 @@ public class BoulderListAdapter extends EventForwardingBaseAdapter {
         View view = convertView;
         if (view == null) {
             view = inflaterService.inflate(
-                    android.R.layout.simple_list_item_activated_2, viewGroup, false);
+                    R.layout.boulder_list_item, viewGroup, false);
         }
 
         Boulder boulder = gym.getBoulders().get(index);
-
-        TextView nameView = (TextView) view.findViewById(android.R.id.text1);
-        nameView.setText(boulder.getName());
-
-        TextView gradeView = (TextView) view.findViewById(android.R.id.text2);
-        gradeView.setText(boulder.getGrade().toFontScale());
+        BoulderListEntryView blev = (BoulderListEntryView) view;
+        blev.setBoulder(boulder);
 
         return view;
     }

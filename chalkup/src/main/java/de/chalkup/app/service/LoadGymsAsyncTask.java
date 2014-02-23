@@ -17,16 +17,18 @@ import org.json.JSONObject;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import de.chalkup.app.model.Boulder;
+import de.chalkup.app.model.BoulderColor;
 import de.chalkup.app.model.BoulderLocation;
 import de.chalkup.app.model.FloorPlan;
 import de.chalkup.app.model.Grade;
@@ -170,6 +172,13 @@ public class LoadGymsAsyncTask extends AsyncTask<Void, Void, List<Gym>> {
         }
 
         List<Boulder> boulders = parseBoulders(gym, new JSONArray(json));
+        Collections.sort(boulders, new Comparator<Boulder>() {
+            @Override
+            public int compare(Boulder lhs, Boulder rhs) {
+                return lhs.getColor().getGermanName().compareTo(rhs.getColor().getGermanName()) * 2 +
+                        Long.compare(lhs.getId(), rhs.getId());
+            }
+        });
         for (Boulder boulder : boulders) {
             gym.addBoulder(boulder);
         }
@@ -181,9 +190,7 @@ public class LoadGymsAsyncTask extends AsyncTask<Void, Void, List<Gym>> {
         for (int i = 0; i < jsonBoulders.length(); i++) {
             JSONObject jsonBoulder = jsonBoulders.getJSONObject(i);
             long id = jsonBoulder.getLong("id");
-            JSONObject jsonColor = jsonBoulder.getJSONObject("color");
-            String colorName = jsonColor.getString("germanName");
-            int color = parseColor(jsonColor.getString("primary"));
+            BoulderColor boulderColor = parseBoulderColor(jsonBoulder.getJSONObject("color"));
             Grade grade = parseGrade(jsonBoulder.getJSONObject("grade").getJSONObject("mean"));
             URL photoUrl = null;
             if (jsonBoulder.has("photo")) {
@@ -199,11 +206,17 @@ public class LoadGymsAsyncTask extends AsyncTask<Void, Void, List<Gym>> {
             double locationY = jsonLocation.getDouble("y");
             BoulderLocation location = new BoulderLocation(locationX, locationY);
 
-            boulders.add(new Boulder(gym, id, colorName + " " + id, grade,
-                    color, photoUrl, location));
+            boulders.add(new Boulder(gym, id, grade, boulderColor, photoUrl, location));
         }
 
         return boulders;
+    }
+
+    private BoulderColor parseBoulderColor(JSONObject jsonColor) throws JSONException, IOException {
+        String colorName = jsonColor.getString("germanName");
+        int color = parseColor(jsonColor.getString("primary"));
+
+        return new BoulderColor(color, colorName);
     }
 
     private int parseColor(String primary) throws IOException {

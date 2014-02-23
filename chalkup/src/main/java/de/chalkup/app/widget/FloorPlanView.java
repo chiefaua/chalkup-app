@@ -1,28 +1,46 @@
 package de.chalkup.app.widget;
 
 import android.content.Context;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
+import android.database.DataSetObserver;
 import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.Paint;
-import android.graphics.Point;
 import android.graphics.PointF;
 import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
+import android.util.TypedValue;
 
 import com.google.common.collect.Lists;
+import com.google.inject.Inject;
 
+import java.util.Collections;
 import java.util.List;
 
 import de.chalkup.app.R;
 import de.chalkup.app.model.Boulder;
 import de.chalkup.app.model.BoulderLocation;
 import de.chalkup.app.model.FloorPlan;
+import de.chalkup.app.model.Gym;
+import de.chalkup.app.service.GymService;
+import roboguice.RoboGuice;
 
 public class FloorPlanView extends TouchImageView {
+    @Inject
+    private GymService gymService;
+
+    private List<Boulder> boulders = Lists.newArrayList();
     private FloorPlan floorPlan;
-    private final List<Boulder> boulders = Lists.newArrayList();
+    private Gym gym;
+    private DataSetObserver gymObserver = new DataSetObserver() {
+        @Override
+        public void onChanged() {
+            setGym(gym);
+        }
+
+        @Override
+        public void onInvalidated() {
+            setGym(gym);
+        }
+    };
 
     public FloorPlanView(Context context) {
         super(context);
@@ -39,7 +57,12 @@ public class FloorPlanView extends TouchImageView {
     @Override
     protected void sharedConstructor(Context context) {
         super.sharedConstructor(context);
+
         setMaxZoom(5.0f);
+
+        if (!isInEditMode()) {
+            RoboGuice.getInjector(context).injectMembers(this);
+        }
     }
 
     public void setFloorPlan(FloorPlan floorPlan) {
@@ -52,8 +75,37 @@ public class FloorPlanView extends TouchImageView {
         }
     }
 
-    public void addBoulder(Boulder boulder) {
-        boulders.add(boulder);
+    public void setBoulders(List<Boulder> boulders) {
+        this.boulders = Lists.newArrayList(boulders);
+        invalidate();
+    }
+
+    public void setGym(Gym gym) {
+        if (this.gym != gym) {
+            if (this.gym != null) {
+                gymService.unregisterGymObserver(this.gym, gymObserver);
+            }
+            this.gym = gym;
+            if (this.gym != null) {
+                gymService.registerGymObserver(this.gym, gymObserver);
+            }
+        }
+
+        // refresh even if the same gym was set again
+        if (gym != null) {
+            setFloorPlan(gym.getFloorPlan());
+            setBoulders(gym.getBoulders());
+        } else {
+            setFloorPlan(null);
+            setBoulders(Collections.<Boulder>emptyList());
+        }
+        invalidate();
+    }
+
+    @Override
+    protected void onDetachedFromWindow() {
+        setGym(null);
+        super.onDetachedFromWindow();
     }
 
     @Override
@@ -68,8 +120,12 @@ public class FloorPlanView extends TouchImageView {
     private void drawBoulder(Boulder boulder, Canvas canvas) {
         PointF pos = locationToViewPos(boulder.getLocation());
         Paint paint = new Paint();
-        paint.setColor(boulder.getColor());
-        canvas.drawCircle(pos.x, pos.y, 25.0f, paint);
+        paint.setColor(boulder.getColor().getColor());
+
+        float radius = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 7,
+                getResources().getDisplayMetrics());
+
+        canvas.drawCircle(pos.x, pos.y, radius, paint);
     }
 
     private PointF locationToViewPos(BoulderLocation location) {
