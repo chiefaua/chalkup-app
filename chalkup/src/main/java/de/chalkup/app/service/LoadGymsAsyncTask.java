@@ -45,12 +45,12 @@ public class LoadGymsAsyncTask extends AsyncTask<Void, Void, List<Gym>> {
     @Inject
     private BackendService backendService;
 
-    private GymService.SyncMode syncMode;
+    private GymSyncMode gymSyncMode;
     private LoadGymsCallback callback;
 
-    public LoadGymsAsyncTask(Context context, GymService.SyncMode syncMode,
+    public LoadGymsAsyncTask(Context context, GymSyncMode gymSyncMode,
                              LoadGymsCallback callback) {
-        this.syncMode = syncMode;
+        this.gymSyncMode = gymSyncMode;
         this.callback = callback;
         RoboGuice.getInjector(context).injectMembers(this);
     }
@@ -129,7 +129,7 @@ public class LoadGymsAsyncTask extends AsyncTask<Void, Void, List<Gym>> {
             long id = jsonFloorPlan.getLong("id");
             int width = jsonImg.getInt("widthInPx");
             int height = jsonImg.getInt("heightInPx");
-            String url = jsonImg.getString("url");
+            URL url = backendService.getAbsoluteUrl(jsonImg.getString("url"));
             File floorPlansDir = new File(application.getCacheDir(), "floorplans");
             floorPlansDir.mkdirs();
             File floorPlanFile = new File(floorPlansDir, gymId + "_" + id);
@@ -141,7 +141,7 @@ public class LoadGymsAsyncTask extends AsyncTask<Void, Void, List<Gym>> {
         return floorPlans;
     }
 
-    private void downloadFloorPlan(String url, File floorPlanFile) throws IOException {
+    private void downloadFloorPlan(URL url, File floorPlanFile) throws IOException {
         try {
             backendService.downloadFile(url, floorPlanFile, getTimeoutMillis());
         } catch (IOException e) {
@@ -176,7 +176,7 @@ public class LoadGymsAsyncTask extends AsyncTask<Void, Void, List<Gym>> {
             @Override
             public int compare(Boulder lhs, Boulder rhs) {
                 return lhs.getColor().getGermanName().compareTo(rhs.getColor().getGermanName()) * 2 +
-                        Long.compare(lhs.getId(), rhs.getId());
+                        Long.valueOf(lhs.getId()).compareTo(Long.valueOf(rhs.getId()));
             }
         });
         for (Boulder boulder : boulders) {
@@ -195,10 +195,7 @@ public class LoadGymsAsyncTask extends AsyncTask<Void, Void, List<Gym>> {
             URL photoUrl = null;
             if (jsonBoulder.has("photo")) {
                 String url = jsonBoulder.getJSONObject("photo").getString("url");
-                if (!url.startsWith("http")) {
-                    url = backendService.getBaseUrl() + url;
-                }
-                photoUrl = new URL(url);
+                photoUrl = backendService.getAbsoluteUrl(url);
             }
 
             JSONObject jsonLocation = jsonBoulder.getJSONObject("location");
@@ -238,7 +235,7 @@ public class LoadGymsAsyncTask extends AsyncTask<Void, Void, List<Gym>> {
     }
 
     private void rethrowIfNeededBySyncMode(IOException e) throws IOException {
-        if (syncMode == GymService.SyncMode.FORCE_SYNC) {
+        if (gymSyncMode == GymSyncMode.FORCE_SYNC) {
             throw e;
         } else if (e instanceof SocketTimeoutException) {
             // OK
@@ -260,7 +257,7 @@ public class LoadGymsAsyncTask extends AsyncTask<Void, Void, List<Gym>> {
     }
 
     private Integer getTimeoutMillis() {
-        if (syncMode == GymService.SyncMode.FAST_FROM_CACHE) {
+        if (gymSyncMode == GymSyncMode.FAST_FROM_CACHE) {
             return FAST_TIMEOUT;
         }
         return null;

@@ -1,6 +1,5 @@
 package de.chalkup.app;
 
-import android.app.Activity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -27,14 +26,6 @@ public class BoulderListFragment extends RoboListFragment {
     private static final String TAG = BoulderListFragment.class.getName();
     private static final String STATE_ACTIVATED_BOULDER = "activated_boulder";
 
-    private static Callback dummyCallback = new Callback() {
-        @Override
-        public void onBoulderSelected(Boulder boulder) {
-        }
-    };
-
-    private Callback callback = dummyCallback;
-
     @Inject
     private GymService gymService;
 
@@ -60,7 +51,7 @@ public class BoulderListFragment extends RoboListFragment {
         if (getArguments() != null && getArguments().containsKey(ARG_GYM_ID)) {
             try {
                 activeGym = gymService.getGym(getArguments().getLong(ARG_GYM_ID));
-
+                floorPlanView.setFloorPlan(activeGym.getFloorPlan());
                 setListAdapter(new BoulderListAdapter(getActivity(), activeGym));
 
                 if (savedInstanceState != null
@@ -79,32 +70,17 @@ public class BoulderListFragment extends RoboListFragment {
     }
 
     @Override
-    public void onAttach(Activity activity) {
-        super.onAttach(activity);
-
-        if (!(activity instanceof Callback)) {
-            throw new IllegalStateException("Activity must implement fragment's callbacks.");
-        }
-
-        callback = (Callback) activity;
-    }
-
-    @Override
-    public void onDetach() {
-        super.onDetach();
-        callback = dummyCallback;
-    }
-
-    @Override
     public void onListItemClick(ListView listView, View view, int position, long id) {
         super.onListItemClick(listView, view, position, id);
 
         try {
             Boulder boulder = activeGym.getBoulder(id);
 
-            floorPlanView.setBoulders(Collections.singletonList(boulder));
+            if (getActivity() instanceof BoulderListActivity) {
+                ((BoulderListActivity) getActivity()).onBoulderSelected(boulder);
+            }
 
-            // callback.onBoulderSelected(boulder);
+            floorPlanView.setBoulders(Collections.singletonList(boulder));
         } catch (BoulderNotFoundException e) {
             Log.e(TAG, "Failed to get active boulder", e);
         }
@@ -126,9 +102,5 @@ public class BoulderListFragment extends RoboListFragment {
         }
 
         activatedPosition = position;
-    }
-
-    public interface Callback {
-        public void onBoulderSelected(Boulder boulder);
     }
 }

@@ -36,16 +36,18 @@ import java.util.List;
 import de.chalkup.app.adapter.GymNavigationAdapter;
 import de.chalkup.app.model.Boulder;
 import de.chalkup.app.model.Gym;
+import de.chalkup.app.service.BoulderSyncMode;
 import de.chalkup.app.service.GymNotFoundException;
 import de.chalkup.app.service.GymService;
 import de.chalkup.app.service.GymSyncCallback;
 import de.chalkup.app.service.SyncBoulderAsyncTask;
 import de.chalkup.app.service.SyncBoulderCallback;
+import de.chalkup.app.service.GymSyncMode;
 import de.chalkup.app.widget.BoulderListEntryView;
 import roboguice.activity.RoboFragmentActivity;
 
 public class BoulderListActivity extends RoboFragmentActivity
-        implements BoulderListFragment.Callback, ActionBar.OnNavigationListener, GymSyncCallback {
+        implements ActionBar.OnNavigationListener, GymSyncCallback {
     private static final String TAG = BoulderListActivity.class.getName();
 
     private static final int MAX_PHOTO_WIDTH = 800;
@@ -86,7 +88,7 @@ public class BoulderListActivity extends RoboFragmentActivity
         actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_LIST);
         actionBar.setListNavigationCallbacks(gymNavigationAdapter, this);
 
-        gymService.syncGyms(this, GymService.SyncMode.FAST_FROM_CACHE, this);
+        gymService.syncGyms(this, GymSyncMode.FAST_FROM_CACHE, BoulderSyncMode.NO_SYNC, this);
     }
 
     @Override
@@ -104,10 +106,9 @@ public class BoulderListActivity extends RoboFragmentActivity
         if (item.getItemId() == R.id.add_boulder && activeGym != null) {
             Boulder boulder = new Boulder(activeGym);
             gymService.addBoulderToGym(activeGym, boulder);
-            onBoulderSelected(boulder);
             return true;
         } else if (item.getItemId() == R.id.refresh_boulder) {
-            gymService.syncGyms(this, GymService.SyncMode.ALLOW_CACHE, this);
+            gymService.syncGyms(this, GymSyncMode.ALLOW_CACHE, BoulderSyncMode.UPLOAD_ONLY, this);
         }
 
         return super.onOptionsItemSelected(item);
@@ -138,25 +139,6 @@ public class BoulderListActivity extends RoboFragmentActivity
     }
 
     @Override
-    public void onBoulderSelected(Boulder boulder) {
-        if (mTwoPane) {
-            Bundle arguments = new Bundle();
-            arguments.putLong(BoulderDetailFragment.ARG_GYM_ID, boulder.getGym().getId());
-            arguments.putLong(BoulderDetailFragment.ARG_BOULDER_ID, boulder.getId());
-            BoulderDetailFragment fragment = new BoulderDetailFragment();
-            fragment.setArguments(arguments);
-            getSupportFragmentManager().beginTransaction()
-                    .replace(R.id.boulder_detail_container, fragment)
-                    .commit();
-        } else {
-            Intent detailIntent = new Intent(this, BoulderDetailActivity.class);
-            detailIntent.putExtra(BoulderDetailFragment.ARG_GYM_ID, boulder.getGym().getId());
-            detailIntent.putExtra(BoulderDetailFragment.ARG_BOULDER_ID, boulder.getId());
-            startActivity(detailIntent);
-        }
-    }
-
-    @Override
     public boolean onNavigationItemSelected(int itemPosition, long itemId) {
         try {
             activeGym = gymService.getGym(itemId);
@@ -173,6 +155,32 @@ public class BoulderListActivity extends RoboFragmentActivity
             return true;
         } catch (GymNotFoundException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    public void onBoulderSelected(Boulder boulder) {
+        showPhoto(boulder, false);
+    }
+
+    public void showPhoto(Boulder boulder) {
+        showPhoto(boulder, true);
+    }
+
+    private void showPhoto(Boulder boulder, boolean openNewViewIfNecessary) {
+        if (mTwoPane) {
+            Bundle arguments = new Bundle();
+            arguments.putLong(BoulderDetailFragment.ARG_GYM_ID, boulder.getGym().getId());
+            arguments.putLong(BoulderDetailFragment.ARG_BOULDER_ID, boulder.getId());
+            BoulderDetailFragment fragment = new BoulderDetailFragment();
+            fragment.setArguments(arguments);
+            getSupportFragmentManager().beginTransaction()
+                    .replace(R.id.boulder_detail_container, fragment)
+                    .commit();
+        } else if (openNewViewIfNecessary) {
+            Intent detailIntent = new Intent(this, BoulderDetailActivity.class);
+            detailIntent.putExtra(BoulderDetailFragment.ARG_GYM_ID, boulder.getGym().getId());
+            detailIntent.putExtra(BoulderDetailFragment.ARG_BOULDER_ID, boulder.getId());
+            startActivity(detailIntent);
         }
     }
 
@@ -342,7 +350,7 @@ public class BoulderListActivity extends RoboFragmentActivity
 
     private void syncCurrentBoulder() {
         final Boulder boulder = currentBoulderListEntryView.getBoulder();
-        new SyncBoulderAsyncTask(this,
+        new SyncBoulderAsyncTask(this, BoulderSyncMode.FULL_SYNC,
                 new SyncBoulderCallback() {
                     @Override
                     public void boulderSyncStarted() {
@@ -350,7 +358,7 @@ public class BoulderListActivity extends RoboFragmentActivity
                     }
 
                     @Override
-                    public void boulderSynced(Boulder boulder) {
+                    public void boulderSynced(List<Boulder> boulders) {
                         boulderSyncDone();
                     }
 

@@ -4,9 +4,9 @@ import android.app.Application;
 import android.content.Context;
 import android.util.AttributeSet;
 import android.view.View;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.google.inject.Inject;
@@ -26,7 +26,7 @@ public class BoulderListEntryView extends LinearLayout implements View.OnClickLi
 
     private TextView mainText;
     private TextView smallText;
-    private ImageView hasPhotoImage;
+    private ImageButton showPhotoButton;
     private View loadingIndicator;
 
     public BoulderListEntryView(Context context) {
@@ -59,20 +59,21 @@ public class BoulderListEntryView extends LinearLayout implements View.OnClickLi
 
         mainText = (TextView) findViewById(R.id.main_text);
         smallText = (TextView) findViewById(R.id.small_text);
-        hasPhotoImage = (ImageView) findViewById(R.id.has_photo_image);
+        showPhotoButton = (ImageButton) findViewById(R.id.show_photo);
         loadingIndicator = findViewById(R.id.loading_indicator);
 
+        showPhotoButton.setOnClickListener(this);
         findViewById(R.id.image_from_camera).setOnClickListener(this);
         findViewById(R.id.image_from_gallery).setOnClickListener(this);
     }
 
     public void showLoading() {
         loadingIndicator.setVisibility(VISIBLE);
-        hasPhotoImage.setVisibility(INVISIBLE);
+        showPhotoButton.setVisibility(INVISIBLE);
     }
 
     public void hideLoading() {
-        hasPhotoImage.setVisibility(VISIBLE);
+        showPhotoButton.setVisibility(VISIBLE);
         loadingIndicator.setVisibility(INVISIBLE);
     }
 
@@ -83,9 +84,9 @@ public class BoulderListEntryView extends LinearLayout implements View.OnClickLi
         smallText.setText(boulder.getGrade().toFontScale());
 
         if (boulder.hasCachedPhoto(application) || boulder.hasPhoto()) {
-            hasPhotoImage.setImageResource(android.R.drawable.star_big_on);
+            showPhotoButton.setImageResource(android.R.drawable.btn_star_big_on);
         } else {
-            hasPhotoImage.setImageResource(android.R.drawable.star_big_off);
+            showPhotoButton.setImageResource(android.R.drawable.btn_star_big_off);
         }
     }
 
@@ -96,6 +97,9 @@ public class BoulderListEntryView extends LinearLayout implements View.OnClickLi
     @Override
     public void onClick(View view) {
         switch (view.getId()) {
+            case R.id.show_photo:
+                boulderListActivity.showPhoto(getBoulder());
+                break;
             case R.id.image_from_camera:
                 boulderListActivity.grabImageFromCamera(this);
                 break;

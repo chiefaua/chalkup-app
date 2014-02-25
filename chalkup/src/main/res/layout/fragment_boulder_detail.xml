@@ -4,44 +4,10 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <LinearLayout
-        android:orientation="vertical"
+    <ImageView
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
-
-        <ImageView
-            android:layout_width="match_parent"
-            android:layout_height="200dp"
-            android:id="@+id/boulder_image" />
-
-        <LinearLayout
-            android:orientation="horizontal"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
-
-            <ImageButton
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:id="@+id/image_from_camera"
-                android:layout_gravity="bottom"
-                android:src="@android:drawable/ic_menu_camera"
-                android:layout_weight="1" />
-
-            <ImageButton
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:id="@+id/image_from_gallery"
-                android:layout_gravity="bottom"
-                android:src="@android:drawable/ic_menu_gallery"
-                android:layout_weight="1" />
-        </LinearLayout>
-
-        <de.chalkup.app.widget.FloorPlanView
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1"
-            android:id="@+id/floorplan" />
-    </LinearLayout>
+        android:layout_height="match_parent"
+        android:id="@+id/boulder_image" />
 
     <RelativeLayout
         android:id="@+id/loading_panel"

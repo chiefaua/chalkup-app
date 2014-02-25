@@ -9,8 +9,6 @@ import java.net.URL;
 public class Boulder {
     public static final long INVALID_ID = -1;
     private long id = INVALID_ID;
-    public static final long NEVER_SYNCED = -1;
-    private long lastSynced = NEVER_SYNCED;
     private final Gym gym;
     private final BoulderLocation location;
     private Grade grade;
@@ -81,14 +79,6 @@ public class Boulder {
 
     public BoulderLocation getLocation() {
         return location;
-    }
-
-    public long getLastSyncedTimestamp() {
-        return lastSynced;
-    }
-
-    public void setLastSyncedTimestamp(long lastSynced) {
-        this.lastSynced = lastSynced;
     }
 
     @Override

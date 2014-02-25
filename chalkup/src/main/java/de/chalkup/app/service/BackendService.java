@@ -26,6 +26,7 @@ public class BackendService {
     private static final String TAG = BackendService.class.getName();
     private static final String API_PROTOCOL = "http";
     private static final String API_DOMAIN = "demo.chalkup.de";
+    private static final String API_PATH = "/rest/v1";
 
     @Inject
     public BackendService(Application application) {
@@ -51,7 +52,7 @@ public class BackendService {
         HttpURLConnection connection = null;
 
         try {
-            connection = (HttpURLConnection) getUrl(path).openConnection();
+            connection = (HttpURLConnection) getApiUrl(path).openConnection();
 
             if (timeoutMillis != null) {
                 connection.setConnectTimeout(timeoutMillis);
@@ -73,12 +74,16 @@ public class BackendService {
         return API_PROTOCOL + "://" + API_DOMAIN;
     }
 
+    public String getApiBaseUrl() {
+        return getBaseUrl() + API_PATH;
+    }
+
     public void downloadFile(String path, File targetFile) throws IOException {
         downloadFile(path, targetFile, null);
     }
 
     public void downloadFile(String path, File targetFile, Integer timeoutMillis) throws IOException {
-        downloadFile(getUrl(path), targetFile, timeoutMillis);
+        downloadFile(getAbsoluteUrl(path), targetFile, timeoutMillis);
     }
 
     public void downloadFile(URL fileUrl, File targetFile) throws IOException {
@@ -100,8 +105,10 @@ public class BackendService {
                 connection.setIfModifiedSince(targetFile.lastModified());
             }
 
+            // get input stream first so it throws an exception if any. This avoids truncating
+            // the output file during creation of the FileOutputStream
+            InputStream is = connection.getInputStream();
             targetOutputStream = new FileOutputStream(targetFile);
-
             IOUtils.copy(connection.getInputStream(), targetOutputStream);
 
             IOUtils.closeQuietly(targetOutputStream);
@@ -112,12 +119,37 @@ public class BackendService {
         }
     }
 
+    public long getFileLastModified(URL url) throws IOException {
+        return getFileLastModified(url, null);
+    }
+
+    public long getFileLastModified(URL url, Integer timeoutMillis) throws IOException {
+        HttpURLConnection connection = null;
+        try {
+            connection = (HttpURLConnection) url.openConnection();
+
+            if (timeoutMillis != null) {
+                connection.setConnectTimeout(timeoutMillis);
+                connection.setReadTimeout(timeoutMillis);
+            }
+
+            connection.getHeaderFields();
+            return connection.getLastModified();
+        } finally {
+            quietCloseConnection(connection);
+        }
+    }
+
     public URL uploadFile(File sourceFile, String path, String contentType) throws IOException {
+        return uploadFile(sourceFile, getAbsoluteUrl(path), contentType);
+    }
+
+    public URL uploadFile(File sourceFile, URL url, String contentType) throws IOException {
         HttpURLConnection connection = null;
         InputStream sourceInputStream = null;
 
         try {
-            connection = (HttpURLConnection) getUrl(path).openConnection();
+            connection = (HttpURLConnection) url.openConnection();
             connection.setDoOutput(true);
             connection.setRequestMethod("PUT");
             connection.setRequestProperty(HttpHeaders.CONTENT_TYPE, contentType);
@@ -129,12 +161,9 @@ public class BackendService {
 
             String location = connection.getHeaderField(HttpHeaders.LOCATION);
             if (location != null) {
-                if (!location.startsWith("http")) {
-                    location = getBaseUrl() + location;
-                }
-                return new URL(location);
+                return getAbsoluteUrl(location);
             } else {
-                return new URL(getBaseUrl() + path);
+                return url;
             }
         } finally {
             quietCloseConnection(connection);
@@ -148,9 +177,21 @@ public class BackendService {
         }
     }
 
-    private URL getUrl(String path) {
+    public URL getApiUrl(String path) {
         try {
-            return new URL(getBaseUrl() + path);
+            return new URL(getApiBaseUrl() + path);
+        } catch (MalformedURLException e) {
+            throw new RuntimeException("Failed to construct URL", e);
+        }
+    }
+
+    public URL getAbsoluteUrl(String url) {
+        try {
+            if (url.startsWith("http")) {
+                return new URL(url);
+            } else {
+                return new URL(getBaseUrl() + url);
+            }
         } catch (MalformedURLException e) {
             throw new RuntimeException("Failed to construct URL", e);
         }

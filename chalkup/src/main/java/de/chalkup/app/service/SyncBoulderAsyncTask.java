@@ -10,11 +10,13 @@ import com.google.inject.Inject;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.util.Arrays;
+import java.util.List;
 
 import de.chalkup.app.model.Boulder;
 import roboguice.RoboGuice;
 
-public class SyncBoulderAsyncTask extends AsyncTask<Boulder, Void, Boulder> {
+public class SyncBoulderAsyncTask extends AsyncTask<Boulder, Void, List<Boulder>> {
     private static final String TAG = SyncBoulderAsyncTask.class.getName();
 
     @Inject
@@ -22,9 +24,12 @@ public class SyncBoulderAsyncTask extends AsyncTask<Boulder, Void, Boulder> {
     @Inject
     private BackendService backendService;
 
+    private BoulderSyncMode boulderSyncMode;
     private SyncBoulderCallback callback;
 
-    public SyncBoulderAsyncTask(Context context, SyncBoulderCallback callback) {
+    public SyncBoulderAsyncTask(Context context, BoulderSyncMode boulderSyncMode,
+                                SyncBoulderCallback callback) {
+        this.boulderSyncMode = boulderSyncMode;
         this.callback = callback;
         RoboGuice.getInjector(context).injectMembers(this);
     }
@@ -35,21 +40,22 @@ public class SyncBoulderAsyncTask extends AsyncTask<Boulder, Void, Boulder> {
     }
 
     @Override
-    protected Boulder doInBackground(Boulder... params) {
-        Boulder boulder = params[0];
-        try {
-            syncBoulder(boulder);
-        } catch (IOException e) {
-            Log.e(TAG, "Failed to sync boulder", e);
-            return null;
+    protected List<Boulder> doInBackground(Boulder... boulders) {
+        for (Boulder boulder : boulders) {
+            try {
+                syncBoulder(boulder);
+            } catch (IOException e) {
+                Log.e(TAG, "Failed to sync boulder", e);
+                return null;
+            }
         }
-        return boulder;
+        return Arrays.asList(boulders);
     }
 
     @Override
-    protected void onPostExecute(Boulder boulder) {
-        if (boulder != null) {
-            callback.boulderSynced(boulder);
+    protected void onPostExecute(List<Boulder> boulders) {
+        if (boulders != null) {
+            callback.boulderSynced(boulders);
         } else {
             callback.boulderSyncFailed();
         }
@@ -57,41 +63,41 @@ public class SyncBoulderAsyncTask extends AsyncTask<Boulder, Void, Boulder> {
 
     private void syncBoulder(Boulder boulder) throws IOException {
         File cachePhotoFile = boulder.getCachePhotoFile(application);
-
-        if (boulder.hasPhoto()) {
-            if (boulder.getLastSyncedTimestamp() == Boulder.NEVER_SYNCED) {
+        if (boulder.hasCachedPhoto(application) && boulder.hasPhoto()) {
+            long photoLastModified = backendService.getFileLastModified(boulder.getPhotoUrl());
+            if (photoLastModified > cachePhotoFile.lastModified()) {
                 downloadPhoto(boulder);
-                return;
-            }
-
-            // TODO: check if remote photo is newer than the cached one
-        } else {
-            if (boulder.hasCachedPhoto(application)) {
+            } else if (photoLastModified < cachePhotoFile.lastModified()) {
                 uploadPhoto(boulder);
-                return;
             }
-        }
-
-        if (boulder.hasCachedPhoto(application)) {
-            if (cachePhotoFile.lastModified() > boulder.getLastSyncedTimestamp()) {
-                uploadPhoto(boulder);
-                return;
-            }
+            // TODO: check for newer photos online and download them
+        } else if (boulder.hasCachedPhoto(application)) {
+            uploadPhoto(boulder);
+        } else if (boulder.hasPhoto()) {
+            downloadPhoto(boulder);
         }
     }
 
     private void downloadPhoto(Boulder boulder) throws IOException {
+        if (boulderSyncMode != BoulderSyncMode.FULL_SYNC &&
+                boulderSyncMode != BoulderSyncMode.DOWNLOAD_ONLY) {
+            return;
+        }
+
         File targetFile = boulder.getCachePhotoFile(application);
         backendService.downloadFile(boulder.getPhotoUrl(), targetFile);
-        boulder.setLastSyncedTimestamp(targetFile.lastModified());
     }
 
     private void uploadPhoto(Boulder boulder) throws IOException {
+        if (boulderSyncMode != BoulderSyncMode.FULL_SYNC &&
+                boulderSyncMode != BoulderSyncMode.UPLOAD_ONLY) {
+            return;
+        }
+
         File sourceFile = boulder.getCachePhotoFile(application);
         URL photoUrl = backendService.uploadFile(sourceFile,
-                "/boulders/" + boulder.getId() + "/photo",
+                backendService.getApiUrl("/boulders/" + boulder.getId() + "/photo"),
                 "image/jpeg");
         boulder.setPhotoUrl(photoUrl);
-        boulder.setLastSyncedTimestamp(sourceFile.lastModified());
     }
 }
