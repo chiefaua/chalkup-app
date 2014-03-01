@@ -17,5 +17,6 @@
     <string name="crop_app_not_found">Es konnte keine App zum Zuschneiden von Bildern gefunden werden</string>
     <string name="sync_boulder_failed">Synchronisieren des Bildes fehlgeschlagen</string>
     <string name="sync_all_boulders_failed">Hochladen der Bilder ist fehlgeschlagen.</string>
+    <string name="boulder_color">Farbe</string>
 
 </resources>

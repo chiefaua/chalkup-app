@@ -1,6 +1,6 @@
 package de.chalkup.app.service;
 
-public interface GymSyncCallback {
+public interface GymSyncListener {
     void syncStarted();
     void syncFinished();
 }

@@ -16,7 +16,7 @@ import java.util.List;
 import de.chalkup.app.model.Boulder;
 import roboguice.RoboGuice;
 
-public class SyncBoulderAsyncTask extends AsyncTask<Boulder, Void, List<Boulder>> {
+class SyncBoulderAsyncTask extends AsyncTask<Boulder, Void, List<Boulder>> {
     private static final String TAG = SyncBoulderAsyncTask.class.getName();
 
     @Inject
@@ -25,10 +25,10 @@ public class SyncBoulderAsyncTask extends AsyncTask<Boulder, Void, List<Boulder>
     private BackendService backendService;
 
     private BoulderSyncMode boulderSyncMode;
-    private SyncBoulderCallback callback;
+    private BoulderSyncCallback callback;
 
     public SyncBoulderAsyncTask(Context context, BoulderSyncMode boulderSyncMode,
-                                SyncBoulderCallback callback) {
+                                BoulderSyncCallback callback) {
         this.boulderSyncMode = boulderSyncMode;
         this.callback = callback;
         RoboGuice.getInjector(context).injectMembers(this);
@@ -70,7 +70,6 @@ public class SyncBoulderAsyncTask extends AsyncTask<Boulder, Void, List<Boulder>
             } else if (photoLastModified < cachePhotoFile.lastModified()) {
                 uploadPhoto(boulder);
             }
-            // TODO: check for newer photos online and download them
         } else if (boulder.hasCachedPhoto(application)) {
             uploadPhoto(boulder);
         } else if (boulder.hasPhoto()) {
@@ -99,5 +98,13 @@ public class SyncBoulderAsyncTask extends AsyncTask<Boulder, Void, List<Boulder>
                 backendService.getApiUrl("/boulders/" + boulder.getId() + "/photo"),
                 "image/jpeg");
         boulder.setPhotoUrl(photoUrl);
+    }
+
+    public static interface BoulderSyncCallback {
+        void boulderSyncStarted();
+
+        void boulderSynced(List<Boulder> boulder);
+
+        void boulderSyncFailed();
     }
 }

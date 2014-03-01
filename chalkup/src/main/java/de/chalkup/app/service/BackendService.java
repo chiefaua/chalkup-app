@@ -127,6 +127,7 @@ public class BackendService {
         HttpURLConnection connection = null;
         try {
             connection = (HttpURLConnection) url.openConnection();
+            connection.setRequestMethod("HEAD");
 
             if (timeoutMillis != null) {
                 connection.setConnectTimeout(timeoutMillis);
@@ -158,6 +159,10 @@ public class BackendService {
             sourceInputStream = new FileInputStream(sourceFile);
 
             IOUtils.copy(sourceInputStream, connection.getOutputStream());
+
+            if (connection.getDate() > 0) {
+                sourceFile.setLastModified(connection.getDate());
+            }
 
             String location = connection.getHeaderField(HttpHeaders.LOCATION);
             if (location != null) {

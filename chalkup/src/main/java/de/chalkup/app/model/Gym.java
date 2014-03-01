@@ -9,17 +9,20 @@ import java.util.List;
 import de.chalkup.app.service.BoulderNotFoundException;
 
 public class Gym {
+    public static final long INVALID_ID = -1;
     private final long id;
     private final String name;
     private final FloorPlan floorPlan;
+    private final List<BoulderColor> colors;
     private final List<Boulder> boulders = new ArrayList<Boulder>();
 
     private long nextBoulderId = 0;
 
-    public Gym(long id, String name, FloorPlan floorPlan) {
+    public Gym(long id, String name, FloorPlan floorPlan, List<BoulderColor> colors) {
         this.id = id;
         this.name = name;
         this.floorPlan = floorPlan;
+        this.colors = colors;
     }
 
     public long getId() {
@@ -32,6 +35,10 @@ public class Gym {
 
     public FloorPlan getFloorPlan() {
         return floorPlan;
+    }
+
+    public List<BoulderColor> getColors() {
+        return colors;
     }
 
     public List<Boulder> getBoulders() {

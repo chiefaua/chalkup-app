@@ -5,7 +5,6 @@ import android.content.Context;
 import android.util.AttributeSet;
 import android.view.View;
 import android.widget.ImageButton;
-import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -14,11 +13,16 @@ import com.google.inject.Inject;
 import de.chalkup.app.BoulderListActivity;
 import de.chalkup.app.R;
 import de.chalkup.app.model.Boulder;
+import de.chalkup.app.service.BoulderSyncListener;
+import de.chalkup.app.service.GymService;
 import roboguice.RoboGuice;
 
-public class BoulderListEntryView extends LinearLayout implements View.OnClickListener {
+public class BoulderListEntryView extends LinearLayout implements View.OnClickListener, BoulderSyncListener {
     @Inject
     private Application application;
+
+    @Inject
+    private GymService gymService;
 
     private BoulderListActivity boulderListActivity;
 
@@ -67,14 +71,8 @@ public class BoulderListEntryView extends LinearLayout implements View.OnClickLi
         findViewById(R.id.image_from_gallery).setOnClickListener(this);
     }
 
-    public void showLoading() {
-        loadingIndicator.setVisibility(VISIBLE);
-        showPhotoButton.setVisibility(INVISIBLE);
-    }
-
-    public void hideLoading() {
-        showPhotoButton.setVisibility(VISIBLE);
-        loadingIndicator.setVisibility(INVISIBLE);
+    public Boulder getBoulder() {
+        return boulder;
     }
 
     public void setBoulder(Boulder boulder) {
@@ -88,23 +86,24 @@ public class BoulderListEntryView extends LinearLayout implements View.OnClickLi
         } else {
             showPhotoButton.setImageResource(android.R.drawable.btn_star_big_off);
         }
-    }
 
-    public Boulder getBoulder() {
-        return boulder;
+        gymService.registerBoulderSyncListener(this);
+        updateLoadingIndicator();
     }
 
     @Override
     public void onClick(View view) {
+        boulderListActivity.onBoulderSelected(boulder);
+
         switch (view.getId()) {
             case R.id.show_photo:
                 boulderListActivity.showPhoto(getBoulder());
                 break;
             case R.id.image_from_camera:
-                boulderListActivity.grabImageFromCamera(this);
+                boulderListActivity.grabImageFromCamera(getBoulder());
                 break;
             case R.id.image_from_gallery:
-                boulderListActivity.grabImageFromGallery(this);
+                boulderListActivity.grabImageFromGallery(getBoulder());
                 break;
         }
     }
@@ -113,5 +112,30 @@ public class BoulderListEntryView extends LinearLayout implements View.OnClickLi
     public boolean hasFocusable() {
         // we have to return false here, otherwise this item could not be clicked.
         return false;
+    }
+
+    @Override
+    public void boulderSyncStarted(Boulder boulder) {
+        updateLoadingIndicator();
+    }
+
+    @Override
+    public void boulderSynced(Boulder boulder) {
+        updateLoadingIndicator();
+    }
+
+    @Override
+    public void boulderSyncFailed(Boulder boulder) {
+        updateLoadingIndicator();
+    }
+
+    private void updateLoadingIndicator() {
+        if (gymService.isSyncingBoulder(boulder)) {
+            loadingIndicator.setVisibility(VISIBLE);
+            showPhotoButton.setVisibility(INVISIBLE);
+        } else {
+            showPhotoButton.setVisibility(VISIBLE);
+            loadingIndicator.setVisibility(INVISIBLE);
+        }
     }
 }

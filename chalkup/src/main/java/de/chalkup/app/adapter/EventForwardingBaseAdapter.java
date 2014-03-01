@@ -45,4 +45,8 @@ public abstract class EventForwardingBaseAdapter extends BaseAdapter {
     protected abstract void registerObserver(DataSetObserver observer);
 
     protected abstract void unregisterObserver(DataSetObserver observer);
+
+    protected void onChanged() {}
+
+    protected void onInvalidated() {}
 }

@@ -3,7 +3,6 @@ package de.chalkup.app.widget;
 import android.content.Context;
 import android.database.DataSetObserver;
 import android.graphics.Canvas;
-import android.graphics.Paint;
 import android.graphics.PointF;
 import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
@@ -119,13 +118,10 @@ public class FloorPlanView extends TouchImageView {
 
     private void drawBoulder(Boulder boulder, Canvas canvas) {
         PointF pos = locationToViewPos(boulder.getLocation());
-        Paint paint = new Paint();
-        paint.setColor(boulder.getColor().getColor());
-
         float radius = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 7,
                 getResources().getDisplayMetrics());
 
-        canvas.drawCircle(pos.x, pos.y, radius, paint);
+        DrawHelper.drawColorCircle(boulder.getColor().getColors(), canvas, pos, radius);
     }
 
     private PointF locationToViewPos(BoulderLocation location) {

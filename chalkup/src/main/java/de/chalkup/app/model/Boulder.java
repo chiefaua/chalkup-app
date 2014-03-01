@@ -5,6 +5,7 @@ import android.graphics.Color;
 
 import java.io.File;
 import java.net.URL;
+import java.util.Collections;
 
 public class Boulder {
     public static final long INVALID_ID = -1;
@@ -16,7 +17,8 @@ public class Boulder {
     private URL photoUrl;
 
     public Boulder(Gym gym) {
-        this(gym, INVALID_ID, Grade.zero(), new BoulderColor(Color.BLACK, ""),
+        this(gym, INVALID_ID, Grade.zero(),
+                new BoulderColor("DEFAULT", Collections.singletonList(Color.BLACK), ""),
                 null, new BoulderLocation(0.0, 0.0));
     }
 

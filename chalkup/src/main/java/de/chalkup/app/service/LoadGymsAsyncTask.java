@@ -8,6 +8,7 @@ import android.os.AsyncTask;
 import android.util.Log;
 
 import com.google.common.base.Charsets;
+import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 
 import org.apache.commons.io.FileUtils;
@@ -16,11 +17,13 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -112,8 +115,14 @@ public class LoadGymsAsyncTask extends AsyncTask<Void, Void, List<Gym>> {
 
             List<FloorPlan> floorPlans = loadFloorPlans(id, jsonGym.getJSONArray("floorPlans"));
 
+            List<BoulderColor> colors = Lists.newArrayList();
+            JSONArray jsonColors = jsonGym.getJSONArray("colors");
+            for (int j = 0; j < jsonColors.length(); j++) {
+                colors.add(parseBoulderColor(jsonColors.getJSONObject(j)));
+            }
+
             // TODO: handle zero/multiple floor plans
-            gyms.add(new Gym(id, name, floorPlans.get(0)));
+            gyms.add(new Gym(id, name, floorPlans.get(0), colors));
         }
 
         return gyms;
@@ -210,10 +219,16 @@ public class LoadGymsAsyncTask extends AsyncTask<Void, Void, List<Gym>> {
     }
 
     private BoulderColor parseBoulderColor(JSONObject jsonColor) throws JSONException, IOException {
+        String name = jsonColor.getString("name");
         String colorName = jsonColor.getString("germanName");
-        int color = parseColor(jsonColor.getString("primary"));
+        List<Integer> colors = Lists.newArrayList();
+        for (String s : Arrays.asList("primary", "secondary", "ternary")) {
+            if (jsonColor.has(s)) {
+                colors.add(parseColor(jsonColor.getString(s)));
+            }
+        }
 
-        return new BoulderColor(color, colorName);
+        return new BoulderColor(name, colors, colorName);
     }
 
     private int parseColor(String primary) throws IOException {
@@ -242,6 +257,9 @@ public class LoadGymsAsyncTask extends AsyncTask<Void, Void, List<Gym>> {
             return;
         } else if (e instanceof UnknownHostException) {
             // OK
+            return;
+        } else if (e instanceof FileNotFoundException) {
+            // OK...?
             return;
         }
 
